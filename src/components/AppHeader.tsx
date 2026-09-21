@@ -102,7 +102,7 @@ export function AppHeader({
                 <DropdownMenuItem
                   onClick={async () => {
                     await supabase.auth.signOut();
-                    window.location.reload();
+                    window.location.href = "/";
                   }}
                 >
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
