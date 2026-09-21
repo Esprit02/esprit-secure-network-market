@@ -13,6 +13,7 @@ export function AuthPanel() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,14 +25,20 @@ export function AuthPanel() {
           password,
           options: {
             data: { name },
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: "https://espritaccess.com.ng/dashboard",
           },
         });
         if (error) throw error;
-        toast.success("Account created — check your email to verify.");
+        toast.success("Account created — enter the code we emailed you.");
+        navigate({ to: "/verify-email", search: { email } });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (data.user?.email_confirmed_at) {
+          navigate({ to: "/dashboard" });
+        } else {
+          navigate({ to: "/verify-email", search: { email } });
+        }
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
