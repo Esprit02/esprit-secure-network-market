@@ -7,14 +7,14 @@ export function BrowseTab({ user }: { user: User }) {
     <div className="space-y-6">
       <div className="relative overflow-hidden rounded-2xl border border-border p-8 shadow-[var(--shadow-panel)]"
            style={{ background: "var(--gradient-hero)" }}>
-        <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full blur-3xl opacity-40" style={{ background: "var(--gradient-red)" }} />
+        <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
         <div className="relative">
-          <p className="text-sm text-foreground/60">Welcome Back!</p>
-          <h2 className="mt-1 font-[Space_Grotesk] text-3xl font-bold md:text-4xl">
+          <p className="text-sm text-white/60">Welcome Back!</p>
+          <h2 className="mt-1 font-display text-3xl font-bold text-white md:text-4xl">
             Hello, <span className="text-primary">{name}</span>
           </h2>
-          <p className="mt-3 max-w-lg text-foreground/70">
-            Your decentralized VPN portal is ready. Head to the Store tab to grab
+          <p className="mt-3 max-w-lg text-white/70">
+            Your digital access portal is ready. Head to the Store tab to grab
             a plan or manage your active keys.
           </p>
         </div>
@@ -26,8 +26,8 @@ export function BrowseTab({ user }: { user: User }) {
           { icon: ShieldCheck, title: "Anti-Detect Matrix", body: "Browser fingerprint protection built-in." },
           { icon: Zap, title: "High-Speed P2P", body: "Encrypted bandwidth optimized for streaming." },
         ].map((f) => (
-          <div key={f.title} className="rounded-xl border border-border bg-panel p-5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
+          <div key={f.title} className="rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-panel)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent text-primary">
               <f.icon className="h-5 w-5" />
             </div>
             <h3 className="mt-3 font-semibold">{f.title}</h3>
