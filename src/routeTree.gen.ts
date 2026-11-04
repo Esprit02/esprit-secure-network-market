@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminVaultRouteImport } from './routes/admin-vault'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 
 const IndexRoute = IndexRouteImport.update({
@@ -24,9 +26,19 @@ const AdminVaultRoute = AdminVaultRouteImport.update({
   path: '/admin-vault',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -38,34 +50,51 @@ const VerifyEmailRoute = VerifyEmailRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin-vault': typeof AdminVaultRoute
+  '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/pricing': typeof PricingRoute
   '/verify-email': typeof VerifyEmailRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin-vault': typeof AdminVaultRoute
+  '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/pricing': typeof PricingRoute
   '/verify-email': typeof VerifyEmailRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin-vault': typeof AdminVaultRoute
+  '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/pricing': typeof PricingRoute
   '/verify-email': typeof VerifyEmailRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin-vault' | '/dashboard' | '/verify-email'
+  fullPaths:
+    '/' | '/admin-vault' | '/auth' | '/dashboard' | '/pricing' | '/verify-email'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin-vault' | '/dashboard' | '/verify-email'
-  id: '__root__' | '/' | '/admin-vault' | '/dashboard' | '/verify-email'
+  to:
+    '/' | '/admin-vault' | '/auth' | '/dashboard' | '/pricing' | '/verify-email'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin-vault'
+    | '/auth'
+    | '/dashboard'
+    | '/pricing'
+    | '/verify-email'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminVaultRoute: typeof AdminVaultRoute
+  AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
+  PricingRoute: typeof PricingRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
 }
 
@@ -85,11 +114,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVaultRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify-email': {
@@ -105,7 +148,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminVaultRoute: AdminVaultRoute,
+  AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
+  PricingRoute: PricingRoute,
   VerifyEmailRoute: VerifyEmailRoute,
 }
 export const routeTree = rootRouteImport

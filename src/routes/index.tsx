@@ -5,6 +5,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import heroDevices from "@/assets/hero-devices.png";
+import logoPulse from "@/assets/logo-mark.png";
 import {
   ShieldCheck,
   Smartphone,
@@ -83,7 +84,7 @@ function Home() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <img src={heroDevices === undefined ? undefined : logoPulse} alt="" className="h-16 w-16 animate-pulse rounded-2xl" />
+        <img src={logoPulse} alt="" className="h-16 w-16 animate-pulse rounded-2xl" />
       </div>
     );
   }
