@@ -13,10 +13,10 @@ export const Route = createFileRoute("/verify-email")({
   }),
   head: () => ({
     meta: [
-      { title: "Verify Your Email — Esprit VPN" },
-      { name: "description", content: "Enter the 6-digit code sent to your email to activate your Esprit VPN account." },
-      { property: "og:title", content: "Verify Your Email — Esprit VPN" },
-      { property: "og:description", content: "Enter the 6-digit code sent to your email to activate your Esprit VPN account." },
+      { title: "Verify Your Email — EspritAccess" },
+      { name: "description", content: "Enter the 6-digit code sent to your email to activate your EspritAccess account." },
+      { property: "og:title", content: "Verify Your Email — EspritAccess" },
+      { property: "og:description", content: "Enter the 6-digit code sent to your email to activate your EspritAccess account." },
     ],
   }),
   component: VerifyEmail,
@@ -57,7 +57,7 @@ function VerifyEmail() {
         type: "signup",
       });
       if (error) throw error;
-      toast.success("Email verified — welcome to Esprit VPN!");
+      toast.success("Email verified — welcome to EspritAccess!");
       navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid or expired code");
@@ -79,16 +79,13 @@ function VerifyEmail() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0A1128] px-4 py-16">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-panel p-6 shadow-[var(--shadow-panel)] md:p-8">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-16">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-panel)] md:p-8">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <span
-            className="flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-[var(--shadow-red)]"
-            style={{ background: "var(--gradient-red)" }}
-          >
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent text-primary shadow-[var(--shadow-brand)]">
             <MailCheck className="h-6 w-6" />
           </span>
-          <h1 className="font-[Space_Grotesk] text-2xl font-bold">
+          <h1 className="font-display text-2xl font-bold">
             Verify your <span className="text-primary">email</span>
           </h1>
           <p className="text-sm text-foreground/70">
@@ -127,7 +124,7 @@ function VerifyEmail() {
             type="submit"
             disabled={busy || token.length !== 6}
             className="w-full font-semibold"
-            style={{ background: "var(--gradient-red)" }}
+            style={{ background: "var(--gradient-brand)" }}
           >
             <ShieldCheck className="mr-2 h-4 w-4" />
             {busy ? "Verifying…" : "Verify Email"}

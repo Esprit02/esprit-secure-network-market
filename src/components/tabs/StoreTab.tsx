@@ -110,7 +110,7 @@ export function StoreTab({ user }: { user: User }) {
       <section>
         <div className="mb-4 flex items-end justify-between">
           <div>
-            <h2 className="font-[Space_Grotesk] text-2xl font-bold">VPN Services</h2>
+            <h2 className="font-display text-2xl font-bold">VPN Services</h2>
             <p className="text-sm text-foreground/60">Active · Purchase and get instant access.</p>
           </div>
           <Badge className="bg-primary text-primary-foreground">Live</Badge>
@@ -122,8 +122,7 @@ export function StoreTab({ user }: { user: User }) {
               key={p.id}
               className={`relative overflow-hidden rounded-2xl border p-6 shadow-[var(--shadow-panel)] ${
                 p.highlight ? "border-primary/60" : "border-border"
-              }`}
-              style={{ background: p.highlight ? "linear-gradient(160deg, oklch(0.28 0.09 265), oklch(0.22 0.05 265))" : "var(--color-panel)" }}
+              } bg-card`}
             >
               {p.highlight && (
                 <div className="absolute -right-14 top-6 rotate-45 bg-primary px-14 py-1 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow">
@@ -131,15 +130,15 @@ export function StoreTab({ user }: { user: User }) {
                 </div>
               )}
               <div className="text-xs font-semibold uppercase tracking-wider text-primary">{p.tag}</div>
-              <h3 className="mt-1 font-[Space_Grotesk] text-2xl font-bold">{p.name}</h3>
+              <h3 className="mt-1 font-display text-2xl font-bold">{p.name}</h3>
               <div className="mt-3 flex items-baseline gap-1">
-                <span className="text-4xl font-bold">₦{p.price.toLocaleString()}</span>
+                <span className="text-4xl font-extrabold">₦{p.price.toLocaleString()}</span>
                 <span className="text-sm text-foreground/60">{p.period}</span>
               </div>
               <ul className="mt-5 space-y-3 text-sm">
                 {FEATURES.map((f) => (
                   <li key={f} className="flex items-start gap-2">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
                       <Check className="h-3.5 w-3.5" strokeWidth={3} />
                     </span>
                     <span className="text-foreground/80">{f}</span>
@@ -150,7 +149,7 @@ export function StoreTab({ user }: { user: User }) {
                 onClick={() => purchase(p.id, p.price)}
                 disabled={busy !== null}
                 className="mt-6 w-full font-semibold"
-                style={{ background: "var(--gradient-red)" }}
+                style={{ background: "var(--gradient-brand)" }}
               >
                 {busy === p.id ? "Processing…" : "Purchase Now"}
               </Button>
@@ -162,10 +161,10 @@ export function StoreTab({ user }: { user: User }) {
       {/* Your keys */}
       {keys.length > 0 && (
         <section>
-          <h2 className="mb-3 font-[Space_Grotesk] text-xl font-bold">Your Active Keys</h2>
+          <h2 className="mb-3 font-display text-xl font-bold">Your Active Keys</h2>
           <div className="space-y-3">
             {keys.map((k) => (
-              <div key={k.id} className="rounded-xl border border-border bg-panel p-4">
+              <div key={k.id} className="rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-panel)]">
                 <div className="mb-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <KeyRound className="h-4 w-4 text-primary" />
@@ -186,7 +185,7 @@ export function StoreTab({ user }: { user: User }) {
                     <Copy className="h-3 w-3" /> Copy
                   </button>
                 </div>
-                <code className="block break-all rounded-md bg-black/40 p-3 text-xs text-foreground/80">
+                <code className="block break-all rounded-md bg-secondary p-3 text-xs text-foreground/80">
                   {k.api_key_or_config ?? "Pending allocation…"}
                 </code>
                 <p className="mt-1 text-[11px] text-foreground/40">Ref: {k.reference_id}</p>
@@ -200,7 +199,7 @@ export function StoreTab({ user }: { user: User }) {
       <ComingSoonShelf icon={Phone} title="One-Time Numbers" body="Disposable phone numbers for verifications, worldwide." />
 
       {/* Shelf 3: E-Books */}
-      <ComingSoonShelf icon={BookOpen} title="E-Books" body="Curated OpSec & privacy library." />
+      <ComingSoonShelf icon={BookOpen} title="E-Books" body="Curated privacy & digital library." />
     </div>
   );
 }
@@ -210,13 +209,13 @@ function ComingSoonShelf({ icon: Icon, title, body }: { icon: typeof Phone; titl
     <section>
       <div className="mb-4 flex items-end justify-between">
         <div>
-          <h2 className="font-[Space_Grotesk] text-2xl font-bold">{title}</h2>
+          <h2 className="font-display text-2xl font-bold">{title}</h2>
           <p className="text-sm text-foreground/60">{body}</p>
         </div>
         <Badge variant="outline" className="border-primary/40 text-primary">Coming Soon</Badge>
       </div>
       <div className="rounded-2xl border border-dashed border-border bg-panel/50 p-10 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-primary">
           <Icon className="h-7 w-7" />
         </div>
         <p className="mt-3 text-sm text-foreground/60">This shelf is being stocked. Check back soon.</p>

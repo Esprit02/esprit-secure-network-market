@@ -84,12 +84,12 @@ export function SettingsTab({ user }: { user: User }) {
     <form onSubmit={save} className="mx-auto max-w-3xl space-y-8">
       <header className="rounded-2xl border border-border bg-panel p-6">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-[var(--shadow-red)]"
-               style={{ background: "var(--gradient-red)" }}>
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-[var(--shadow-brand)]"
+               style={{ background: "var(--gradient-brand)" }}>
             <UserIcon className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="font-[Space_Grotesk] text-xl font-bold">Settings & Profile</h2>
+            <h2 className="font-display text-xl font-bold">Settings & Profile</h2>
             <p className="text-sm text-foreground/60">Manage your account, preferences and localization.</p>
           </div>
         </div>
@@ -127,7 +127,7 @@ export function SettingsTab({ user }: { user: User }) {
       </section>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" disabled={busy} className="font-semibold" style={{ background: "var(--gradient-red)" }}>
+        <Button type="submit" disabled={busy} className="font-semibold" style={{ background: "var(--gradient-brand)" }}>
           {busy ? "Saving…" : "Save Changes"}
         </Button>
       </div>

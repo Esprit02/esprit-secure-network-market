@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, Zap, Globe2 } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Globe2, ShieldCheck, Zap, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export function AuthPanel() {
@@ -48,77 +50,82 @@ export function AuthPanel() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-6xl flex-col items-center justify-center gap-10 px-4 py-16 md:flex-row">
-      <div className="flex-1 space-y-6">
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-primary">
-          Decentralized · Private · Fast
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border/70">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+          <Link to="/" aria-label="EspritAccess home"><BrandLogo size={34} /></Link>
+          <ThemeToggle />
         </div>
-        <h1 className="font-[Space_Grotesk] text-4xl font-bold leading-tight md:text-6xl">
-          Esprit <span className="text-primary">VPN</span>
-          <br />
-          <span className="text-foreground/80">Own your traffic.</span>
-        </h1>
-        <p className="max-w-xl text-foreground/70">
-          65,000+ localized decentralized nodes, malware-blocking, anti-detect
-          fingerprint protection, and high-speed encrypted P2P bandwidth — all
-          in one premium client portal.
-        </p>
-        <ul className="grid gap-3 text-sm text-foreground/80">
-          {[
-            [Globe2, "65,000+ nodes across the world"],
-            [ShieldCheck, "Malware blocking & ad shielding"],
-            [Zap, "High-speed P2P encrypted bandwidth"],
-          ].map(([Icon, txt], i) => {
-            const I = Icon as typeof Globe2;
-            return (
-              <li key={i} className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                  <I className="h-4 w-4" />
-                </span>
-                {txt as string}
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-      <div className="w-full max-w-md rounded-2xl border border-border bg-panel p-6 shadow-[var(--shadow-panel)] md:p-8">
-        <div className="mb-6 flex rounded-lg bg-secondary p-1 text-sm">
-          <button
-            onClick={() => setMode("signin")}
-            className={`flex-1 rounded-md py-2 font-medium transition ${
-              mode === "signin" ? "bg-primary text-primary-foreground shadow-[var(--shadow-red)]" : "text-foreground/70"
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => setMode("signup")}
-            className={`flex-1 rounded-md py-2 font-medium transition ${
-              mode === "signup" ? "bg-primary text-primary-foreground shadow-[var(--shadow-red)]" : "text-foreground/70"
-            }`}
-          >
-            Sign Up
-          </button>
+      </header>
+      <div className="mx-auto flex max-w-6xl flex-col items-stretch gap-10 px-4 py-12 md:flex-row md:py-20">
+        <div className="flex-1 space-y-6 md:pt-6">
+          <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/60 hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" /> Back to home
+          </Link>
+          <h1 className="text-4xl font-extrabold leading-tight md:text-5xl">
+            Your Gateway to <span className="text-primary">Digital Access</span>
+          </h1>
+          <p className="max-w-lg leading-relaxed text-foreground/70">
+            One account for VPN services, virtual numbers, digital
+            subscriptions, AI tools, privacy products and e-books.
+          </p>
+          <ul className="grid gap-3 text-sm text-foreground/80">
+            {[
+              [Globe2, "Fast, encrypted connections"],
+              [ShieldCheck, "Privacy and security first"],
+              [Zap, "Instant activation after payment"],
+            ].map(([Icon, txt]) => {
+              const I = Icon as typeof Globe2;
+              return (
+                <li key={txt as string} className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-primary">
+                    <I className="h-4 w-4" />
+                  </span>
+                  {txt as string}
+                </li>
+              );
+            })}
+          </ul>
         </div>
-        <form onSubmit={submit} className="space-y-4">
-          {mode === "signup" && (
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-panel)] md:p-8">
+          <div className="mb-6 flex rounded-lg bg-secondary p-1 text-sm">
+            <button
+              onClick={() => setMode("signin")}
+              className={`flex-1 rounded-md py-2 font-medium transition ${
+                mode === "signin" ? "bg-primary text-primary-foreground shadow-[var(--shadow-brand)]" : "text-foreground/70"
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => setMode("signup")}
+              className={`flex-1 rounded-md py-2 font-medium transition ${
+                mode === "signup" ? "bg-primary text-primary-foreground shadow-[var(--shadow-brand)]" : "text-foreground/70"
+              }`}
+            >
+              Sign Up
+            </button>
+          </div>
+          <form onSubmit={submit} className="space-y-4">
+            {mode === "signup" && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Full name</Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ada Miller" required />
+              </div>
+            )}
             <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ada Miller" required />
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
             </div>
-          )}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required autoComplete={mode === "signup" ? "new-password" : "current-password"} />
-          </div>
-          <Button type="submit" disabled={busy} className="w-full font-semibold" style={{ background: "var(--gradient-red)" }}>
-            {busy ? "Please wait…" : mode === "signup" ? "Create Account" : "Sign In"}
-          </Button>
-        </form>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required autoComplete={mode === "signup" ? "new-password" : "current-password"} />
+            </div>
+            <Button type="submit" disabled={busy} className="w-full font-semibold" style={{ background: "var(--gradient-brand)" }}>
+              {busy ? "Please wait…" : mode === "signup" ? "Create Account" : "Sign In"}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );

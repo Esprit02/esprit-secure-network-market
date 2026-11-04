@@ -15,7 +15,7 @@ import { Lock, ShieldCheck, KeyRound, PackagePlus } from "lucide-react";
 export const Route = createFileRoute("/admin-vault")({
   head: () => ({
     meta: [
-      { title: "Admin Vault — Esprit VPN" },
+      { title: "Admin Vault — EspritAccess" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
@@ -68,20 +68,20 @@ function AdminVault() {
 
   if (!unlocked) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0A1128] px-4">
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <form onSubmit={unlock} className="w-full max-w-sm rounded-2xl border border-border bg-panel p-8 shadow-[var(--shadow-panel)]">
           <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-[var(--shadow-red)]" style={{ background: "var(--gradient-red)" }}>
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-[var(--shadow-brand)]" style={{ background: "var(--gradient-brand)" }}>
               <Lock className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="font-[Space_Grotesk] text-xl font-bold">Admin Vault</h1>
+              <h1 className="font-display text-xl font-bold">Admin Vault</h1>
               <p className="text-xs text-foreground/60">Restricted access</p>
             </div>
           </div>
           <Label htmlFor="pwd">Password</Label>
           <Input id="pwd" type="password" autoFocus value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-2" />
-          <Button type="submit" disabled={busy} className="mt-4 w-full font-semibold" style={{ background: "var(--gradient-red)" }}>
+          <Button type="submit" disabled={busy} className="mt-4 w-full font-semibold" style={{ background: "var(--gradient-brand)" }}>
             {busy ? "Verifying…" : "Unlock Vault"}
           </Button>
         </form>
@@ -92,11 +92,11 @@ function AdminVault() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-10">
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-[var(--shadow-red)]" style={{ background: "var(--gradient-red)" }}>
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-[var(--shadow-brand)]" style={{ background: "var(--gradient-brand)" }}>
           <ShieldCheck className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="font-[Space_Grotesk] text-2xl font-bold">Vault Console</h1>
+          <h1 className="font-display text-2xl font-bold">Vault Console</h1>
           <p className="text-sm text-foreground/60">Stock and manage decentralized VPN credentials.</p>
         </div>
       </div>
@@ -112,11 +112,11 @@ function AdminVault() {
               <span className="text-xs text-foreground/50">Total {stock[k].available + stock[k].sold}</span>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-black/30 p-3">
+              <div className="rounded-lg bg-secondary p-3">
                 <div className="text-xs text-foreground/60">Available</div>
                 <div className="text-2xl font-bold text-primary">{stock[k].available}</div>
               </div>
-              <div className="rounded-lg bg-black/30 p-3">
+              <div className="rounded-lg bg-secondary p-3">
                 <div className="text-xs text-foreground/60">Sold</div>
                 <div className="text-2xl font-bold text-foreground/80">{stock[k].sold}</div>
               </div>
@@ -147,7 +147,7 @@ function AdminVault() {
           </div>
         </div>
         <div className="mt-4 flex justify-end">
-          <Button type="submit" disabled={busy || !keys.trim()} className="font-semibold" style={{ background: "var(--gradient-red)" }}>
+          <Button type="submit" disabled={busy || !keys.trim()} className="font-semibold" style={{ background: "var(--gradient-brand)" }}>
             {busy ? "Uploading…" : "Add to Vault"}
           </Button>
         </div>

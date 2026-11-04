@@ -4,15 +4,16 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/AppHeader";
 import { Dashboard } from "@/components/Dashboard";
+import logoPulse from "@/assets/logo-mark.png";
 
 export const Route = createFileRoute("/dashboard")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Dashboard — Esprit VPN" },
-      { name: "description", content: "Your Esprit VPN client portal: browse nodes, purchase plans, and manage your profile." },
-      { property: "og:title", content: "Dashboard — Esprit VPN" },
-      { property: "og:description", content: "Your Esprit VPN client portal: browse nodes, purchase plans, and manage your profile." },
+      { title: "Dashboard — EspritAccess" },
+      { name: "description", content: "Your EspritAccess client portal: browse services, purchase plans, and manage your profile." },
+      { property: "og:title", content: "Dashboard — EspritAccess" },
+      { property: "og:description", content: "Your EspritAccess client portal: browse services, purchase plans, and manage your profile." },
     ],
   }),
   component: DashboardPage,
@@ -55,14 +56,14 @@ function DashboardPage() {
 
   if (loading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0A1128] text-foreground/70">
-        Loading…
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <img src={logoPulse} alt="" className="h-16 w-16 animate-pulse rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A1128]">
+    <div className="min-h-screen bg-background">
       <AppHeader
         email={user.email ?? null}
         emailVerified={!!user.email_confirmed_at}
