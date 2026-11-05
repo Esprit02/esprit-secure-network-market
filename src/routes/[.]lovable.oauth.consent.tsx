@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ShieldCheck, ShieldAlert, Check, X } from "lucide-react";
@@ -20,8 +20,7 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
     const authorizationId = new URLSearchParams(location.search).get("authorization_id")!;
     const { data, error } = await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
     if (error) throw error;
-    const immediate = data?.redirect_url ?? data?.redirect_to;
-    if (immediate && !data?.client) throw redirect({ href: immediate });
+    if (data && "redirect_url" in data) throw redirect({ href: data.redirect_url });
     return data;
   },
   component: Consent,
@@ -40,20 +39,19 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
   ),
 });
 
+type RedirectTarget = { redirect_url?: string; redirect_to?: string } | null;
+
 function Consent() {
   const details = Route.useLoaderData();
   const { authorization_id } = Route.useSearch();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
-  }, []);
 
   const clientName = details?.client?.name ?? "this app";
-  const redirectUri = details?.client?.redirect_uris?.[0] ?? null;
-  const scopes = (details?.scopes ?? []) as string[];
+  const userEmail = details?.user?.email ?? null;
+  const redirectUri = details?.redirect_uri ?? null;
+  const scopes =
+    typeof details?.scope === "string" ? details.scope.split(/\s+/).filter(Boolean) : [];
 
   async function decide(approve: boolean) {
     setBusy(true);
@@ -66,7 +64,7 @@ function Consent() {
       setError(error.message);
       return;
     }
-    const target = data?.redirect_url ?? data?.redirect_to;
+    const target = (data as RedirectTarget)?.redirect_url ?? (data as RedirectTarget)?.redirect_to;
     if (!target) {
       setBusy(false);
       setError("No redirect was returned by the authorization server.");
