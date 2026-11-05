@@ -24,7 +24,7 @@ function toOrdersText(orders: ReturnType<typeof toOrderJson>[]): string {
   return orders
     .map(
       (o) =>
-        `${o.createdAt.slice(0, 10)}  ${o.plan}  NGN ${o.amount_ngn.toLocaleString("en-NG")}  ${o.paymentStatus}${o.reference ? `  (${o.reference})` : ""}`,
+        `${o.createdAt.slice(0, 10)}  ${o.plan}  NGN ${o.amountNgn.toLocaleString("en-NG")}  ${o.paymentStatus}${o.reference ? `  (${o.reference})` : ""}`,
     )
     .join("\n");
 }
