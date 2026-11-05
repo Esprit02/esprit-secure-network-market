@@ -13,8 +13,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminVaultRouteImport } from './routes/admin-vault'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
 const IndexRoute = IndexRouteImport.update({
@@ -37,6 +39,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -47,6 +54,12 @@ const VerifyEmailRoute = VerifyEmailRouteImport.update({
   path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   id: '/.lovable/oauth/consent',
   path: '/.lovable/oauth/consent',
@@ -58,8 +71,10 @@ export interface FileRoutesByFullPath {
   '/admin-vault': typeof AdminVaultRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
 }
 export interface FileRoutesByTo {
@@ -67,8 +82,10 @@ export interface FileRoutesByTo {
   '/admin-vault': typeof AdminVaultRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
 }
 export interface FileRoutesById {
@@ -77,8 +94,10 @@ export interface FileRoutesById {
   '/admin-vault': typeof AdminVaultRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
 }
 export interface FileRouteTypes {
@@ -88,8 +107,10 @@ export interface FileRouteTypes {
     | '/admin-vault'
     | '/auth'
     | '/dashboard'
+    | '/mcp'
     | '/pricing'
     | '/verify-email'
+    | '/.well-known/oauth-protected-resource'
     | '/.lovable/oauth/consent'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -97,8 +118,10 @@ export interface FileRouteTypes {
     | '/admin-vault'
     | '/auth'
     | '/dashboard'
+    | '/mcp'
     | '/pricing'
     | '/verify-email'
+    | '/.well-known/oauth-protected-resource'
     | '/.lovable/oauth/consent'
   id:
     | '__root__'
@@ -106,8 +129,10 @@ export interface FileRouteTypes {
     | '/admin-vault'
     | '/auth'
     | '/dashboard'
+    | '/mcp'
     | '/pricing'
     | '/verify-email'
+    | '/.well-known/oauth-protected-resource'
     | '/.lovable/oauth/consent'
   fileRoutesById: FileRoutesById
 }
@@ -116,8 +141,10 @@ export interface RootRouteChildren {
   AdminVaultRoute: typeof AdminVaultRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
+  McpRoute: typeof McpRoute
   PricingRoute: typeof PricingRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
 }
 
@@ -151,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -163,6 +197,13 @@ declare module '@tanstack/react-router' {
       path: '/verify-email'
       fullPath: '/verify-email'
       preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.lovable/oauth/consent': {
@@ -180,8 +221,11 @@ const rootRouteChildren: RootRouteChildren = {
   AdminVaultRoute: AdminVaultRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
+  McpRoute: McpRoute,
   PricingRoute: PricingRoute,
   VerifyEmailRoute: VerifyEmailRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
 }
 export const routeTree = rootRouteImport
