@@ -40,10 +40,8 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
   ),
 });
 
-type ConsentDetails = Awaited<ReturnType<ReturnType<typeof Route.useLoaderData> extends never ? never : never>>;
-
 function Consent() {
-  const details = Route.useLoaderData() as ConsentDetails | null;
+  const details = Route.useLoaderData();
   const { authorization_id } = Route.useSearch();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
