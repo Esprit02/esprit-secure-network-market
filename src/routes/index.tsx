@@ -360,5 +360,3 @@ function SiteFooter() {
     </footer>
   );
 }
-
-import logoPulse from "@/assets/logo-mark.png";
