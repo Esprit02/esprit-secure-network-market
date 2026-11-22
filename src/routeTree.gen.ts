@@ -12,7 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminVaultRouteImport } from './routes/admin-vault'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
@@ -34,9 +34,9 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
@@ -70,7 +70,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin-vault': typeof AdminVaultRoute
   '/auth': typeof AuthRoute
-  '/dashboard': typeof DashboardRoute
+  '/faq': typeof FaqRoute
   '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/verify-email': typeof VerifyEmailRoute
@@ -81,7 +81,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin-vault': typeof AdminVaultRoute
   '/auth': typeof AuthRoute
-  '/dashboard': typeof DashboardRoute
+  '/faq': typeof FaqRoute
   '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/verify-email': typeof VerifyEmailRoute
@@ -93,7 +93,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin-vault': typeof AdminVaultRoute
   '/auth': typeof AuthRoute
-  '/dashboard': typeof DashboardRoute
+  '/faq': typeof FaqRoute
   '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
   '/verify-email': typeof VerifyEmailRoute
@@ -106,7 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-vault'
     | '/auth'
-    | '/dashboard'
+    | '/faq'
     | '/mcp'
     | '/pricing'
     | '/verify-email'
@@ -117,7 +117,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-vault'
     | '/auth'
-    | '/dashboard'
+    | '/faq'
     | '/mcp'
     | '/pricing'
     | '/verify-email'
@@ -128,7 +128,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-vault'
     | '/auth'
-    | '/dashboard'
+    | '/faq'
     | '/mcp'
     | '/pricing'
     | '/verify-email'
@@ -140,7 +140,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminVaultRoute: typeof AdminVaultRoute
   AuthRoute: typeof AuthRoute
-  DashboardRoute: typeof DashboardRoute
+  FaqRoute: typeof FaqRoute
   McpRoute: typeof McpRoute
   PricingRoute: typeof PricingRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
@@ -171,11 +171,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -220,7 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminVaultRoute: AdminVaultRoute,
   AuthRoute: AuthRoute,
-  DashboardRoute: DashboardRoute,
+  FaqRoute: FaqRoute,
   McpRoute: McpRoute,
   PricingRoute: PricingRoute,
   VerifyEmailRoute: VerifyEmailRoute,

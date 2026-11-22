@@ -1,35 +1,8 @@
-@import "tailwindcss" source(none);
-@source "../src";
-@import "tw-animate-css";
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * EspritAccess design system.
- *
- * Brand colors (exact, user-specified):
- *   Primary Navy     #061A35
- *   Secondary Navy   #0B2545
- *   Deep Midnight    #041226
- *   Emerald Green    #16C784
- *   Soft Green       #27C878
- *   Turquoise Accent #16B8B0
- *   White            #FFFFFF
- *
- * Light mode is the default. Dark mode activates via the `dark` class on
- * <html> and is toggled/persisted by src/hooks/use-theme.ts.
- */
-
 @theme inline {
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-display: "Manrope", "Inter", system-ui, sans-serif;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -49,138 +22,142 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-ring-offset-background: var(--background);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-panel: var(--panel);
-  --color-panel-elev: var(--panel-elev);
-  --color-primary-glow: var(--primary-glow);
-  --color-navy: var(--navy);
-  --color-navy-soft: var(--navy-soft);
-  --color-navy-deep: var(--navy-deep);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
 }
 
+/* Light Mode — Clean Banking Fintech */
 :root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #10b981;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #2563eb;
   --radius: 0.75rem;
-
-  /* Light mode (default): white surfaces, navy type, emerald accent */
-  --background: #FFFFFF;
-  --foreground: #0B2545;
-  --card: #FFFFFF;
-  --card-foreground: #0B2545;
-  --popover: #FFFFFF;
-  --popover-foreground: #0B2545;
-  --primary: #16C784;
-  --primary-foreground: #041226;
-  --primary-glow: #27C878;
-  --secondary: #EEF4FB;
-  --secondary-foreground: #0B2545;
-  --muted: #F4F7FB;
-  --muted-foreground: #52698A;
-  --accent: #E8FBF3;
-  --accent-foreground: #0B2545;
-  --destructive: #E5484D;
-  --destructive-foreground: #FFFFFF;
-  --border: #E3EAF3;
-  --input: #E3EAF3;
-  --ring: #16C784;
-  --panel: #FFFFFF;
-  --panel-elev: #F8FAFD;
-  --navy: #061A35;
-  --navy-soft: #0B2545;
-  --navy-deep: #041226;
-  --gradient-brand: linear-gradient(135deg, #16C784, #0FAE74);
-  --gradient-hero: linear-gradient(160deg, #061A35, #0B2545);
-  --shadow-brand: 0 10px 30px -10px rgba(22, 199, 132, 0.45);
-  --shadow-panel: 0 6px 24px -8px rgba(6, 26, 53, 0.10);
-  --chart-1: #16C784;
-  --chart-2: #16B8B0;
-  --chart-3: #0B2545;
-  --chart-4: #27C878;
-  --chart-5: #52698A;
-  --sidebar: #F8FAFD;
-  --sidebar-foreground: #0B2545;
-  --sidebar-primary: #16C784;
-  --sidebar-primary-foreground: #041226;
-  --sidebar-accent: #EEF4FB;
-  --sidebar-accent-foreground: #0B2545;
-  --sidebar-border: #E3EAF3;
-  --sidebar-ring: #16C784;
 }
 
+/* Dark Mode — Refined Midnight Fintech */
 .dark {
-  /* Dark mode: deep navy surfaces, white type, emerald accent */
-  --background: #041226;
-  --foreground: #FFFFFF;
-  --card: #0B2545;
-  --card-foreground: #FFFFFF;
-  --popover: #0B2545;
-  --popover-foreground: #FFFFFF;
-  --primary: #16C784;
-  --primary-foreground: #041226;
-  --primary-glow: #27C878;
-  --secondary: #0E2A4A;
-  --secondary-foreground: #FFFFFF;
-  --muted: #0E2A4A;
-  --muted-foreground: #9FB4CE;
-  --accent: #0E2A4A;
-  --accent-foreground: #FFFFFF;
-  --destructive: #E5484D;
-  --destructive-foreground: #FFFFFF;
-  --border: rgba(255, 255, 255, 0.10);
-  --input: rgba(255, 255, 255, 0.14);
-  --ring: #16C784;
-  --panel: #0B2545;
-  --panel-elev: #0E2A4A;
-  --navy: #061A35;
-  --navy-soft: #0B2545;
-  --navy-deep: #041226;
-  --gradient-brand: linear-gradient(135deg, #16C784, #0FAE74);
-  --gradient-hero: linear-gradient(160deg, #061A35, #041226);
-  --shadow-brand: 0 10px 30px -10px rgba(22, 199, 132, 0.35);
-  --shadow-panel: 0 6px 24px -8px rgba(0, 0, 0, 0.45);
-  --chart-1: #16C784;
-  --chart-2: #16B8B0;
-  --chart-3: #52698A;
-  --chart-4: #27C878;
-  --chart-5: #9FB4CE;
-  --sidebar: #0E2A4A;
-  --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #16C784;
-  --sidebar-primary-foreground: #041226;
-  --sidebar-accent: #0E2A4A;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: rgba(255, 255, 255, 0.10);
-  --sidebar-ring: #16C784;
+  --background: #0b1120;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #10b981;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #2563eb;
 }
 
-@layer base {
-  * {
-    border-color: var(--color-border);
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes pulse-emerald {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
   }
 
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-family: "Inter", system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    transition: background-color 0.3s ease, color 0.3s ease;
+  70% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
   }
-  :root { color-scheme: light; }
-  .dark { color-scheme: dark; }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: "Manrope", "Inter", system-ui, sans-serif;
-    letter-spacing: -0.02em;
+}
+
+@keyframes pulse-red {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
   }
+
+  70% {
+    box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+  }
+}
+
+@keyframes ambient-float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.status-dot-active {
+  display: inline-block;
+  height: 0.625rem;
+  width: 0.625rem;
+  border-radius: 9999px;
+  background-color: #10b981;
+  animation: pulse-emerald 2.2s infinite;
+}
+
+.status-dot-expired {
+  display: inline-block;
+  height: 0.625rem;
+  width: 0.625rem;
+  border-radius: 9999px;
+  background-color: #ef4444;
+  animation: pulse-red 2.2s infinite;
+}
+
+.fintech-card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.fintech-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(37, 99, 235, 0.4);
+  box-shadow: 0 12px 30px -10px rgba(37, 99, 235, 0.18);
+}
+
+.hero-glow {
+  background: radial-gradient(circle at top right,
+      rgba(16, 185, 129, 0.14),
+      rgba(37, 99, 235, 0.1) 40%,
+      transparent 72%);
+}
+
+.animate-float-slow {
+  animation: ambient-float 5s ease-in-out infinite;
 }

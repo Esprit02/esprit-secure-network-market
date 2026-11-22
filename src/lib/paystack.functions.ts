@@ -2,17 +2,23 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-const PLAN_AMOUNTS: Record<"monthly" | "yearly", number> = {
+const PLAN_AMOUNTS: Record<
+  "standard" | "plus" | "pro" | "monthly" | "yearly",
+  number
+> = {
+  standard: 3999,
+  plus: 6999,
+  pro: 9999,
   monthly: 4000,
   yearly: 14000,
 };
 
 /**
  * Verify a Paystack transaction by reference, then atomically:
- *  - mark the user's order as 'paid'
- *  - claim one unsold vpn_vault entry matching the plan
- *  - link the vault entry to the order and mark it sold
- *  - return the revealed api_key_or_config to the client
+ * - mark the user's order as `paid`
+ * - claim one unsold vpn_vault entry matching the plan
+ * - link the vault entry to the order and mark it sold
+ * - return the revealed api_key_or_config to the client
  */
 export const finalizePaystackOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -20,7 +26,7 @@ export const finalizePaystackOrder = createServerFn({ method: "POST" })
     z
       .object({
         reference: z.string().min(6).max(120),
-        plan_type: z.enum(["monthly", "yearly"]),
+        plan_type: z.enum(["standard", "plus", "pro", "monthly", "yearly"]),
       })
       .parse(data),
   )

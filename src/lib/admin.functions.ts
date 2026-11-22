@@ -63,3 +63,66 @@ export const adminInventory = createServerFn({ method: "POST" })
     }
     return acc;
   });
+/** Return full admin dashboard overview: inventory, revenue, orders, and users. */
+export const adminDashboardData = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({ password: z.string().min(1).max(200) }).parse(data))
+  .handler(async ({ data }) => {
+    if (!verifyPassword(data.password)) throw new Error("Unauthorized");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [vaultRes, ordersRes, usersRes] = await Promise.all([
+      supabaseAdmin.from("vpn_vault").select("plan_type, is_sold"),
+      supabaseAdmin
+        .from("orders")
+        .select("id, user_id, plan_type, amount_ngn, payment_status, reference_id, vpn_vault_id, created_at")
+        .order("created_at", { ascending: false })
+        .limit(100),
+      supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 100 }),
+    ]);
+
+    if (vaultRes.error) throw new Error(vaultRes.error.message);
+    if (ordersRes.error) throw new Error(ordersRes.error.message);
+
+    const inventory = {
+      monthly: { available: 0, sold: 0 },
+      yearly: { available: 0, sold: 0 },
+    };
+    for (const r of vaultRes.data ?? []) {
+      const p = r.plan_type as "monthly" | "yearly";
+      if (!inventory[p]) continue;
+      if (r.is_sold) inventory[p].sold += 1;
+      else inventory[p].available += 1;
+    }
+
+    const authUsers = usersRes.data?.users ?? [];
+    const emailById = new Map(authUsers.map((u) => [u.id, u.email ?? "Unknown"]));
+
+    const orders = (ordersRes.data ?? []).map((o) => ({
+      ...o,
+      user_email: emailById.get(o.user_id) ?? o.user_id,
+    }));
+
+    const paidOrders = orders.filter(
+      (o) => o.payment_status === "paid" || o.payment_status === "success"
+    );
+    const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.amount_ngn || 0), 0);
+
+    const users = authUsers.map((u) => ({
+      id: u.id,
+      email: u.email ?? "No email",
+      created_at: u.created_at,
+      last_sign_in_at: u.last_sign_in_at ?? null,
+    }));
+
+    return {
+      inventory,
+      stats: {
+        totalRevenue,
+        totalOrders: orders.length,
+        paidOrders: paidOrders.length,
+        totalUsers: users.length,
+      },
+      orders,
+      users,
+    };
+  });

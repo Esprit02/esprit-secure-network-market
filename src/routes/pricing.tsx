@@ -1,100 +1,122 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { BrandLogo } from "@/components/BrandLogo";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { createFileRoute } from '@tanstack/react-router'
+import { Check, Zap, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Check, ArrowRight } from "lucide-react";
 
-export const Route = createFileRoute("/pricing")({
-  head: () => ({
-    meta: [
-      { title: "Pricing — EspritAccess" },
-      { name: "description", content: "EspritAccess VPN pricing: Monthly ₦4,000, Yearly ₦14,000. Secure checkout with instant activation." },
-      { property: "og:title", content: "Pricing — EspritAccess" },
-      { property: "og:description", content: "EspritAccess VPN pricing: Monthly ₦4,000, Yearly ₦14,000. Secure checkout with instant activation." },
+export const Route = createFileRoute('/pricing')({
+  component: PricingSection,
+})
+
+const plans = [
+  {
+    name: "1-Day Access Pass",
+    price: "₦1,500",
+    period: "24 hours",
+    description: "Instant high-speed residential IP access for quick tasks and testing.",
+    features: [
+      "High-Speed Residential Proxy",
+      "Zero-Log Privacy Policy",
+      "Instant Automated Activation",
+      "Standard WhatsApp Support",
     ],
-  }),
-  component: PricingPage,
-});
-
-const FEATURES = [
-  "Access to 65,000+ localized decentralized nodes across the world",
-  "Built-in malware blocking & secure ad shielding",
-  "Anti-detect browser fingerprint protection matrix",
-  "High-speed encrypted P2P bandwidth connection",
+    popular: false,
+  },
+  {
+    name: "Monthly Resident Pro",
+    price: "₦12,500",
+    period: "30 days",
+    description: "Our most popular plan for uninterrupted streaming, secure browsing, and work.",
+    features: [
+      "Dedicated High-Speed Nodes",
+      "Advanced WireGuard Protocol",
+      "Unlimited Bandwidth",
+      "Priority WhatsApp Support",
+      "Multi-Device Connection",
+    ],
+    popular: true,
+  },
+  {
+    name: "Quarterly VIP Pass",
+    price: "₦32,000",
+    period: "90 days",
+    description: "Maximum savings and long-term stability for power users and businesses.",
+    features: [
+      "Everything in Monthly Pro",
+      "Maximum Encryption Tier",
+      "Static Residential IP Option",
+      "Dedicated Account Manager",
+      "Instant Telegram/WhatsApp API",
+    ],
+    popular: false,
+  },
 ];
 
-const PLANS = [
-  { name: "Monthly Plan", price: "₦4,000", period: "/ month", tag: "Flexible", highlight: false },
-  { name: "Yearly Plan", price: "₦14,000", period: "/ year", tag: "Best Value", highlight: true },
-];
-
-function PricingPage() {
+function PricingSection() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link to="/" aria-label="EspritAccess home"><BrandLogo size={34} /></Link>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Button asChild className="font-semibold" style={{ background: "var(--gradient-brand)" }}>
-              <Link to="/auth">Get Started</Link>
-            </Button>
-          </div>
+    <section className="py-20 px-4 max-w-7xl mx-auto">
+      <div className="text-center space-y-4 mb-16">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold tracking-wider uppercase">
+          <Zap className="w-3.5 h-3.5" /> Transparent Pricing
         </div>
-      </header>
+        <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
+          Choose Your Gateway to Digital Access
+        </h2>
+        <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base">
+          Lightning-fast residential IPs with instant automated delivery straight to your WhatsApp.
+        </p>
+      </div>
 
-      <main className="mx-auto max-w-6xl px-4 py-14 md:py-20">
-        <div className="mx-auto max-w-2xl text-center">
-          <h1 className="text-4xl font-extrabold md:text-5xl">VPN Plans & Pricing</h1>
-          <p className="mt-4 text-foreground/70">
-            Prices in Nigerian Naira. Purchase happens securely inside your
-            dashboard after signing in — your access key is revealed instantly
-            after payment.
-          </p>
-        </div>
-
-        <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-2">
-          {PLANS.map((p) => (
-            <div
-              key={p.name}
-              className={`relative rounded-2xl border bg-card p-8 shadow-[var(--shadow-panel)] ${
-                p.highlight ? "border-primary/60" : "border-border"
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+        {plans.map((plan, index) => (
+          <div
+            key={index}
+            className={`relative flex flex-col justify-between rounded-2xl p-8 border transition-all duration-300 ${plan.popular
+                ? "bg-card border-emerald-500/50 shadow-2xl shadow-emerald-500/10 scale-105 z-10"
+                : "bg-card/60 border-border hover:border-border/80"
               }`}
-            >
-              {p.highlight && (
-                <Badge className="absolute right-6 top-6 bg-primary text-primary-foreground">Best Value</Badge>
-              )}
-              <div className="text-xs font-semibold uppercase tracking-wider text-primary">{p.tag}</div>
-              <h2 className="mt-1 text-xl font-bold">{p.name}</h2>
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold">{p.price}</span>
-                <span className="text-sm text-foreground/60">{p.period}</span>
+          >
+            {plan.popular && (
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-500 text-slate-950 text-xs font-bold uppercase tracking-wider shadow">
+                Most Popular
+              </span>
+            )}
+
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
+                <Globe className="w-5 h-5 text-emerald-400" />
               </div>
-              <ul className="mt-6 space-y-3 text-sm">
-                {FEATURES.map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
-                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                    </span>
-                    <span className="text-foreground/80">{f}</span>
+              <p className="text-xs text-muted-foreground mb-6">{plan.description}</p>
+
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-4xl font-extrabold text-foreground">{plan.price}</span>
+                <span className="text-xs text-muted-foreground">/ {plan.period}</span>
+              </div>
+
+              <ul className="space-y-3 mb-8">
+                {plan.features.map((feature, fIndex) => (
+                  <li key={fIndex} className="flex items-center gap-3 text-xs md:text-sm text-foreground/90">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{feature}</span>
                   </li>
                 ))}
               </ul>
-              <Button asChild className="mt-8 w-full font-semibold" style={{ background: "var(--gradient-brand)" }}>
-                <Link to="/auth">
-                  Sign in to purchase <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
             </div>
-          ))}
-        </div>
 
-        <p className="mx-auto mt-10 max-w-2xl text-center text-sm text-foreground/60">
-          Checkout is processed securely by Paystack. Your VPN key is revealed
-          on your dashboard immediately after a successful payment.
-        </p>
-      </main>
-    </div>
+            <Button
+              className={`w-full font-semibold py-6 rounded-xl transition-all ${plan.popular
+                  ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20"
+                  : "bg-secondary hover:bg-secondary/80 text-secondary-foreground"
+                }`}
+              onClick={() => {
+                const text = "Hello EspritAccess, I want to subscribe to " + plan.name + " (" + plan.price + "). Please guide me.";
+                window.open("https://wa.me/2348051309239?text=" + encodeURIComponent(text), "_blank");
+              }}
+            >
+              Get Started Now
+            </Button>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
