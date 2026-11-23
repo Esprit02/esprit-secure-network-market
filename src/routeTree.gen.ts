@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminVaultRouteImport } from './routes/admin-vault'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -32,6 +33,11 @@ const AdminVaultRoute = AdminVaultRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin-vault': typeof AdminVaultRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
   '/faq': typeof FaqRoute
   '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin-vault': typeof AdminVaultRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
   '/faq': typeof FaqRoute
   '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin-vault': typeof AdminVaultRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
   '/faq': typeof FaqRoute
   '/mcp': typeof McpRoute
   '/pricing': typeof PricingRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-vault'
     | '/auth'
+    | '/dashboard'
     | '/faq'
     | '/mcp'
     | '/pricing'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-vault'
     | '/auth'
+    | '/dashboard'
     | '/faq'
     | '/mcp'
     | '/pricing'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin-vault'
     | '/auth'
+    | '/dashboard'
     | '/faq'
     | '/mcp'
     | '/pricing'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminVaultRoute: typeof AdminVaultRoute
   AuthRoute: typeof AuthRoute
+  DashboardRoute: typeof DashboardRoute
   FaqRoute: typeof FaqRoute
   McpRoute: typeof McpRoute
   PricingRoute: typeof PricingRoute
@@ -169,6 +182,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminVaultRoute: AdminVaultRoute,
   AuthRoute: AuthRoute,
+  DashboardRoute: DashboardRoute,
   FaqRoute: FaqRoute,
   McpRoute: McpRoute,
   PricingRoute: PricingRoute,
