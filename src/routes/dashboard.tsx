@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ import {
   ArrowRight,
   Mail,
   Sparkles,
+  ExternalLink,
 } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
@@ -64,6 +65,30 @@ interface OrderRecord {
   vpn_key?: string;
   created_at?: string;
 }
+
+const COMMUNITY_SHOWCASE = [
+  {
+    title: "Remote Office & Teams",
+    subtitle: "Encrypted connections for developers, designers, and agencies.",
+    badge: "Lagos • Abuja • Global",
+    image:
+      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=700&q=75",
+  },
+  {
+    title: "Borderless Digital Work",
+    subtitle: "Access global tools, AI platforms, and client portals without blocks.",
+    badge: "99.9% Uptime",
+    image:
+      "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=700&q=75",
+  },
+  {
+    title: "Instant Mobile & OTP Access",
+    subtitle: "Verify apps and stay protected on the move from any device.",
+    badge: "iOS • Android • PC",
+    image:
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=700&q=75",
+  },
+];
 
 const VPN_PLANS = [
   {
@@ -215,7 +240,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 2500,
       cover: "https://covers.openlibrary.org/b/isbn/9780857197689-M.jpg",
-      gradient: "from-emerald-600 to-teal-950",
+      gradient: "from-emerald-600/90 to-teal-950",
     },
     {
       code: "book-fin-2",
@@ -226,7 +251,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.8",
       price: 2000,
       cover: "https://covers.openlibrary.org/b/isbn/9781612680194-M.jpg",
-      gradient: "from-purple-700 to-indigo-950",
+      gradient: "from-violet-700/90 to-indigo-950",
     },
     {
       code: "book-fin-3",
@@ -237,7 +262,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 1800,
       cover: "https://covers.openlibrary.org/b/isbn/9780451205360-M.jpg",
-      gradient: "from-amber-600 to-stone-950",
+      gradient: "from-amber-600/90 to-stone-950",
     },
     {
       code: "book-hlt-1",
@@ -248,7 +273,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.8",
       price: 2500,
       cover: "https://covers.openlibrary.org/b/isbn/9781501144318-M.jpg",
-      gradient: "from-sky-600 to-blue-950",
+      gradient: "from-cyan-600/90 to-slate-950",
     },
     {
       code: "book-hlt-2",
@@ -259,7 +284,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 3000,
       cover: "https://covers.openlibrary.org/b/isbn/9780593236598-M.jpg",
-      gradient: "from-cyan-600 to-slate-950",
+      gradient: "from-teal-600/90 to-slate-950",
     },
     {
       code: "book-hlt-3",
@@ -270,7 +295,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.8",
       price: 2500,
       cover: "https://covers.openlibrary.org/b/isbn/9781250066114-M.jpg",
-      gradient: "from-green-600 to-emerald-950",
+      gradient: "from-green-600/90 to-emerald-950",
     },
     {
       code: "book-dev-1",
@@ -281,7 +306,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 2500,
       cover: "https://covers.openlibrary.org/b/isbn/9780735211292-M.jpg",
-      gradient: "from-blue-600 to-indigo-950",
+      gradient: "from-indigo-600/90 to-slate-950",
     },
     {
       code: "book-dev-2",
@@ -292,7 +317,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.8",
       price: 2200,
       cover: "https://covers.openlibrary.org/b/isbn/9781455586691-M.jpg",
-      gradient: "from-slate-600 to-slate-950",
+      gradient: "from-zinc-600/90 to-zinc-950",
     },
     {
       code: "book-dev-3",
@@ -303,7 +328,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 2500,
       cover: "https://covers.openlibrary.org/b/isbn/9780743269513-M.jpg",
-      gradient: "from-indigo-600 to-blue-950",
+      gradient: "from-sky-600/90 to-indigo-950",
     },
     {
       code: "book-gos-1",
@@ -314,7 +339,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 2000,
       cover: "https://covers.openlibrary.org/b/isbn/9780310205715-M.jpg",
-      gradient: "from-amber-500 to-orange-950",
+      gradient: "from-amber-500/90 to-orange-950",
     },
     {
       code: "book-gos-2",
@@ -325,7 +350,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 2000,
       cover: "https://covers.openlibrary.org/b/isbn/9780785271765-M.jpg",
-      gradient: "from-blue-500 to-cyan-950",
+      gradient: "from-cyan-500/90 to-indigo-950",
     },
     {
       code: "book-gos-3",
@@ -336,7 +361,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.8",
       price: 2200,
       cover: "https://covers.openlibrary.org/b/isbn/9780446691093-M.jpg",
-      gradient: "from-violet-600 to-purple-950",
+      gradient: "from-fuchsia-600/90 to-purple-950",
     },
     {
       code: "book-nov-1",
@@ -347,7 +372,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 2000,
       cover: "https://covers.openlibrary.org/b/isbn/9780062315007-M.jpg",
-      gradient: "from-orange-600 to-amber-950",
+      gradient: "from-orange-600/90 to-amber-950",
     },
     {
       code: "book-nov-2",
@@ -358,7 +383,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 1800,
       cover: "https://covers.openlibrary.org/b/isbn/9780385474542-M.jpg",
-      gradient: "from-red-700 to-stone-950",
+      gradient: "from-rose-700/90 to-stone-950",
     },
     {
       code: "book-nov-3",
@@ -369,13 +394,13 @@ const DIGITAL_PRODUCTS: {
       rating: "4.8",
       price: 2200,
       cover: "https://covers.openlibrary.org/b/isbn/9781616202415-M.jpg",
-      gradient: "from-fuchsia-700 to-purple-950",
+      gradient: "from-purple-700/90 to-fuchsia-950",
     },
   ];
 
 const SIDEBAR_ITEMS: { id: TabKey; label: string; icon: any; badge?: number }[] =
   [
-    { id: "dashboard", label: "Dashboard", icon: Home },
+    { id: "dashboard", label: "Home", icon: Home },
     { id: "vpn", label: "My VPN", icon: Shield },
     { id: "sms", label: "Virtual SMS", icon: Smartphone },
     { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
@@ -601,9 +626,9 @@ function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050507] text-zinc-300">
+      <div className="flex min-h-screen items-center justify-center bg-[#06070a] text-zinc-300">
         <div className="flex items-center gap-3">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
           <span className="text-sm font-medium">Loading EspritAccess...</span>
         </div>
       </div>
@@ -611,30 +636,30 @@ function DashboardPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full overflow-x-hidden bg-[#050507] text-zinc-100">
-      {/* Multi-Tone Ambient Lighting on Pure Black */}
+    <div className="relative flex min-h-screen w-full overflow-x-hidden bg-[#06070a] text-zinc-100">
+      {/* Lively Multi-Tone Ambient Lighting */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-36 left-1/3 h-[420px] w-[640px] rounded-full bg-blue-600/15 blur-[140px]" />
-        <div className="absolute bottom-0 right-10 h-[320px] w-[420px] rounded-full bg-cyan-500/10 blur-[130px]" />
-        <div className="absolute top-1/2 left-0 h-[300px] w-[300px] rounded-full bg-violet-600/10 blur-[130px]" />
+        <div className="absolute -top-32 left-1/4 h-[420px] w-[580px] rounded-full bg-cyan-500/12 blur-[140px]" />
+        <div className="absolute top-1/3 right-0 h-[360px] w-[420px] rounded-full bg-indigo-600/14 blur-[140px]" />
+        <div className="absolute bottom-0 left-10 h-[300px] w-[360px] rounded-full bg-emerald-500/10 blur-[140px]" />
       </div>
 
       {/* Left Sidebar (Desktop) */}
-      <aside className="relative z-10 hidden w-64 shrink-0 flex-col justify-between border-r border-white/10 bg-[#09090d]/95 p-4 backdrop-blur-xl lg:flex">
+      <aside className="relative z-10 hidden w-64 shrink-0 flex-col justify-between border-r border-white/[0.06] bg-[#0a0c12]/90 p-4 backdrop-blur-xl lg:flex">
         <div>
-          <div className="mb-6 flex items-center gap-2.5 px-2 pt-1">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-sm font-black text-white shadow-[0_0_20px_rgba(59,130,246,0.75)]">
+          <Link to="/" className="mb-6 flex items-center gap-2.5 px-2 pt-1 group">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-indigo-600 text-sm font-black text-white shadow-[0_0_20px_rgba(6,182,212,0.5)]">
               EA
             </span>
             <div>
               <p className="text-base font-bold leading-tight text-white">
-                Esprit<span className="text-blue-400">Access</span>
+                Esprit<span className="text-cyan-400">Access</span>
               </p>
-              <p className="text-[10px] text-zinc-400">
-                Your Gateway to Digital Access
+              <p className="text-[10px] text-zinc-400 group-hover:text-cyan-300 transition">
+                View Main Website ↗
               </p>
             </div>
-          </div>
+          </Link>
 
           <nav className="space-y-1">
             {SIDEBAR_ITEMS.map((item) => {
@@ -646,8 +671,8 @@ function DashboardPage() {
                   type="button"
                   onClick={() => setActiveTab(item.id)}
                   className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 ${active
-                      ? "bg-blue-600 text-white shadow-[0_0_22px_rgba(37,99,235,0.65)]"
-                      : "text-zinc-400 hover:translate-x-0.5 hover:bg-white/[0.05] hover:text-white"
+                      ? "bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-[0_0_22px_rgba(6,182,212,0.35)]"
+                      : "text-zinc-400 hover:translate-x-0.5 hover:bg-white/[0.04] hover:text-white"
                     }`}
                 >
                   <span className="flex items-center gap-3">
@@ -669,15 +694,13 @@ function DashboardPage() {
           <button
             type="button"
             onClick={() => setActiveTab("subscriptions")}
-            className="flex w-full items-center justify-between rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-white/[0.02] p-3 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-400/70 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+            className="flex w-full items-center justify-between rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 to-transparent p-3 text-left shadow-[0_0_18px_rgba(245,158,11,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-400/50"
           >
             <div className="flex items-center gap-2.5">
               <Crown className="h-4 w-4 text-amber-400" />
               <div>
                 <p className="text-xs font-bold text-white">Upgrade to Pro</p>
-                <p className="text-[10px] text-zinc-400">
-                  Unlock more features
-                </p>
+                <p className="text-[10px] text-zinc-400">Unlock more features</p>
               </div>
             </div>
             <ArrowRight className="h-3.5 w-3.5 text-zinc-400" />
@@ -686,7 +709,7 @@ function DashboardPage() {
           <button
             type="button"
             onClick={() => setActiveTab("support")}
-            className="flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-[#0f0f14] p-3 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-400/50"
+            className="flex w-full items-center gap-2.5 rounded-xl border border-white/[0.06] bg-[#0e1118] p-3 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-500/40"
           >
             <Mail className="h-4 w-4 text-cyan-400" />
             <div>
@@ -702,29 +725,37 @@ function DashboardPage() {
       {/* Right Main Panel */}
       <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-x-hidden">
         {/* Top Bar */}
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/10 bg-[#050507]/85 px-4 py-3 backdrop-blur-xl sm:px-6">
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/[0.06] bg-[#06070a]/85 px-4 py-3 backdrop-blur-xl sm:px-6">
           <div className="relative min-w-0 flex-1 max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search services..."
-              className="w-full rounded-full border border-white/10 bg-[#0f0f14] py-2 pl-9 pr-4 text-xs text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none focus:shadow-[0_0_18px_rgba(37,99,235,0.3)]"
+              placeholder="Search VPN, SMS numbers, e-books..."
+              className="w-full rounded-full border border-white/[0.08] bg-[#0e1118] py-2 pl-9 pr-4 text-xs text-white placeholder-zinc-500 focus:border-cyan-500/60 focus:outline-none focus:shadow-[0_0_18px_rgba(6,182,212,0.2)]"
             />
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            <Link
+              to="/"
+              className="hidden items-center gap-1.5 rounded-full border border-white/[0.08] bg-[#0e1118] px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-cyan-500/40 hover:text-white md:inline-flex"
+            >
+              <ExternalLink className="h-3.5 w-3.5 text-cyan-400" />
+              Main Site
+            </Link>
+
             <button
               type="button"
               onClick={() => setActiveTab("notifications")}
-              className="relative rounded-full border border-white/10 bg-[#0f0f14] p-2 text-zinc-300 transition hover:border-blue-400"
+              className="relative rounded-full border border-white/[0.08] bg-[#0e1118] p-2 text-zinc-300 transition hover:border-cyan-500/40"
             >
               <Bell className="h-4 w-4" />
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500" />
             </button>
 
-            <div className="hidden items-center gap-2 rounded-full border border-emerald-500/30 bg-[#0f0f14] px-3 py-1.5 sm:flex">
+            <div className="hidden items-center gap-2 rounded-full border border-emerald-500/25 bg-[#0e1118] px-3 py-1.5 shadow-[0_0_16px_rgba(16,185,129,0.1)] sm:flex">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-zinc-950 shadow-[0_0_12px_rgba(16,185,129,0.65)]">
                 {displayName.charAt(0).toUpperCase()}
               </span>
@@ -736,7 +767,7 @@ function DashboardPage() {
             <button
               type="button"
               onClick={handleSignOut}
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-[#0f0f14] px-3.5 py-2 text-xs font-semibold text-zinc-300 transition hover:border-blue-400 hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-[#0e1118] px-3.5 py-2 text-xs font-semibold text-zinc-300 transition hover:border-rose-500/40 hover:text-white"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Sign Out</span>
@@ -745,15 +776,15 @@ function DashboardPage() {
         </header>
 
         {/* Mobile Nav Strip */}
-        <div className="flex w-full gap-2 overflow-x-auto border-b border-white/10 bg-[#09090d] px-4 py-2.5 lg:hidden">
+        <div className="flex w-full gap-2 overflow-x-auto border-b border-white/[0.06] bg-[#0a0c12] px-4 py-2.5 lg:hidden">
           {SIDEBAR_ITEMS.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => setActiveTab(item.id)}
               className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold ${activeTab === item.id
-                  ? "bg-blue-600 text-white shadow-[0_0_16px_rgba(37,99,235,0.6)]"
-                  : "border border-white/10 bg-[#0f0f14] text-zinc-400"
+                  ? "bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-[0_0_16px_rgba(6,182,212,0.4)]"
+                  : "border border-white/[0.06] bg-[#0e1118] text-zinc-400"
                 }`}
             >
               {item.label}
@@ -764,12 +795,12 @@ function DashboardPage() {
         {/* Main Content */}
         <main className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
           {statusMessage && (
-            <div className="rounded-xl border border-blue-500/40 bg-blue-950/40 px-4 py-3 text-xs font-medium text-blue-200 shadow-[0_0_20px_rgba(37,99,235,0.2)]">
+            <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/30 px-4 py-3 text-xs font-medium text-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
               {statusMessage}
             </div>
           )}
 
-          {/* DASHBOARD OVERVIEW */}
+          {/* HOME / DASHBOARD OVERVIEW */}
           {activeTab === "dashboard" && (
             <div className="space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-4">
@@ -786,7 +817,7 @@ function DashboardPage() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-2.5 shadow-[0_0_25px_rgba(16,185,129,0.12)]">
+                <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-2.5 shadow-[0_0_25px_rgba(16,185,129,0.12)]">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
                     <Shield className="h-5 w-5" />
                   </div>
@@ -805,18 +836,18 @@ function DashboardPage() {
 
               {/* 4 Floating Glowing KPI Cards */}
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 p-5 shadow-[0_0_30px_rgba(37,99,235,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_40px_rgba(37,99,235,0.7)]">
+                <div className="rounded-2xl border border-cyan-400/25 bg-gradient-to-br from-cyan-500/90 to-indigo-700 p-5 shadow-[0_0_30px_rgba(6,182,212,0.28)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_40px_rgba(6,182,212,0.48)]">
                   <div className="flex items-center justify-between">
                     <Shield className="h-6 w-6 text-white" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_10px_#6ee7b7]" />
                   </div>
                   <p className="mt-4 text-sm font-bold text-white">Active VPN</p>
-                  <p className="text-xs text-blue-100">
+                  <p className="text-xs text-cyan-100">
                     {activeKey ? "Connected" : "Not Activated"}
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/50 hover:shadow-[0_0_25px_rgba(6,182,212,0.2)]">
+                <div className="rounded-2xl border border-white/[0.06] bg-[#0d1017] p-5 shadow-[0_0_20px_rgba(0,0,0,0.4)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/40 hover:shadow-[0_0_25px_rgba(6,182,212,0.15)]">
                   <p className="text-[11px] font-medium text-zinc-400">
                     Subscription Plan
                   </p>
@@ -828,8 +859,8 @@ function DashboardPage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-900/40 to-[#0c0c10] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-violet-400/60 hover:shadow-[0_0_28px_rgba(139,92,246,0.28)]">
-                  <p className="text-[11px] font-medium text-violet-200">
+                <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-950/70 to-[#0d1017] p-5 shadow-[0_0_20px_rgba(99,102,241,0.12)] transition-all duration-300 hover:-translate-y-1 hover:border-indigo-400/50 hover:shadow-[0_0_28px_rgba(99,102,241,0.25)]">
+                  <p className="text-[11px] font-medium text-indigo-200">
                     Total Spent
                   </p>
                   <p className="mt-2 text-xl font-extrabold text-white">
@@ -840,7 +871,7 @@ function DashboardPage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-900/30 to-[#0c0c10] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400/60 hover:shadow-[0_0_25px_rgba(16,185,129,0.22)]">
+                <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-950/50 to-[#0d1017] p-5 shadow-[0_0_20px_rgba(16,185,129,0.1)] transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400/50 hover:shadow-[0_0_25px_rgba(16,185,129,0.22)]">
                   <p className="text-[11px] font-medium text-emerald-200">
                     Referral Bonus
                   </p>
@@ -855,14 +886,55 @@ function DashboardPage() {
                 </div>
               </div>
 
+              {/* Lively EspritAccess Community & Office Connection Showcase */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-white">
+                    Built for Modern Work & Global Connection
+                  </h2>
+                  <span className="text-[11px] text-cyan-400">
+                    EspritAccess Community
+                  </span>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                  {COMMUNITY_SHOWCASE.map((item) => (
+                    <div
+                      key={item.title}
+                      className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0d1017] shadow-[0_0_22px_rgba(0,0,0,0.45)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/40 hover:shadow-[0_0_28px_rgba(6,182,212,0.18)]"
+                    >
+                      <div className="relative h-36 w-full overflow-hidden">
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0d1017] via-[#0d1017]/40 to-transparent" />
+                        <span className="absolute left-3 top-3 rounded-full border border-white/10 bg-[#06070a]/75 px-2.5 py-0.5 text-[10px] font-semibold text-cyan-300 backdrop-blur-md">
+                          {item.badge}
+                        </span>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-sm font-bold text-white">
+                          {item.title}
+                        </h3>
+                        <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                          {item.subtitle}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Activity Overview + Quick Actions */}
               <div className="grid gap-6 lg:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 transition-all duration-300 hover:border-blue-500/30 lg:col-span-2">
+                <div className="rounded-2xl border border-white/[0.06] bg-[#0d1017] p-5 shadow-[0_0_22px_rgba(0,0,0,0.4)] transition-all duration-300 hover:border-cyan-500/30 lg:col-span-2">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-bold text-white">
                       Your Activity Overview
                     </h2>
-                    <span className="rounded-full border border-white/10 bg-[#050507] px-3 py-1 text-[11px] text-zinc-400">
+                    <span className="rounded-full border border-white/[0.08] bg-[#06070a] px-3 py-1 text-[11px] text-zinc-400">
                       Last 30 Days
                     </span>
                   </div>
@@ -873,12 +945,12 @@ function DashboardPage() {
                         <linearGradient id="eaGlow" x1="0" y1="0" x2="0" y2="1">
                           <stop
                             offset="0%"
-                            stopColor="#38bdf8"
+                            stopColor="#22d3ee"
                             stopOpacity="0.4"
                           />
                           <stop
                             offset="100%"
-                            stopColor="#38bdf8"
+                            stopColor="#22d3ee"
                             stopOpacity="0"
                           />
                         </linearGradient>
@@ -890,13 +962,13 @@ function DashboardPage() {
                       <path
                         d="M0 95 Q 50 65, 100 80 T 200 55 T 300 68 T 400 25"
                         fill="none"
-                        stroke="#38bdf8"
+                        stroke="#22d3ee"
                         strokeWidth="3"
                         strokeLinecap="round"
                       />
                     </svg>
 
-                    <div className="space-y-3 border-t border-white/10 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+                    <div className="space-y-3 border-t border-white/[0.06] pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
                       <div>
                         <p className="flex items-center gap-1.5 text-[11px] text-zinc-400">
                           <Globe className="h-3.5 w-3.5 text-cyan-400" />{" "}
@@ -921,7 +993,7 @@ function DashboardPage() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5">
+                <div className="rounded-2xl border border-white/[0.06] bg-[#0d1017] p-5 shadow-[0_0_22px_rgba(0,0,0,0.4)]">
                   <h2 className="flex items-center gap-1.5 text-sm font-bold text-white">
                     <Zap className="h-4 w-4 text-cyan-400" /> Quick Actions
                   </h2>
@@ -958,7 +1030,7 @@ function DashboardPage() {
                           key={qa.label}
                           type="button"
                           onClick={() => setActiveTab(qa.tab)}
-                          className="rounded-xl border border-white/10 bg-[#121218] p-3 text-left transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/60 hover:shadow-[0_0_20px_rgba(37,99,235,0.28)]"
+                          className="rounded-xl border border-white/[0.06] bg-[#131722] p-3 text-left transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/45 hover:shadow-[0_0_20px_rgba(6,182,212,0.18)]"
                         >
                           <Icon className="h-4 w-4 text-cyan-400" />
                           <p className="mt-2 text-xs font-bold text-white">
@@ -974,7 +1046,7 @@ function DashboardPage() {
 
               {/* Active VPN Key + Promo Banner */}
               <div className="grid gap-6 lg:grid-cols-2">
-                <div className="rounded-2xl border border-blue-500/30 bg-[#0c0c10] p-5 shadow-[0_0_28px_rgba(37,99,235,0.12)] transition-all duration-300 hover:-translate-y-0.5">
+                <div className="rounded-2xl border border-cyan-500/20 bg-[#0d1017] p-5 shadow-[0_0_28px_rgba(6,182,212,0.1)] transition-all duration-300 hover:-translate-y-0.5">
                   <div className="flex items-center gap-2">
                     <KeyRound className="h-4 w-4 text-cyan-400" />
                     <h2 className="text-sm font-bold text-white">
@@ -982,12 +1054,12 @@ function DashboardPage() {
                     </h2>
                   </div>
                   {activeKey ? (
-                    <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#050507] px-3.5 py-2.5 font-mono text-xs text-cyan-300">
+                    <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-[#06070a] px-3.5 py-2.5 font-mono text-xs text-cyan-300">
                       <span className="truncate">{activeKey}</span>
                       <button
                         type="button"
                         onClick={() => handleCopyKey(activeKey)}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-600 px-3.5 py-1.5 font-sans text-xs font-semibold text-white shadow-[0_0_15px_rgba(37,99,235,0.6)] hover:bg-blue-500"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-3.5 py-1.5 font-sans text-xs font-semibold text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:opacity-95"
                       >
                         {copiedKey ? (
                           <Check className="h-3.5 w-3.5" />
@@ -1006,7 +1078,7 @@ function DashboardPage() {
                       <button
                         type="button"
                         onClick={() => setActiveTab("subscriptions")}
-                        className="shrink-0 rounded-full bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-[0_0_22px_rgba(37,99,235,0.7)] transition hover:bg-blue-500"
+                        className="shrink-0 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-[0_0_22px_rgba(6,182,212,0.45)] transition hover:opacity-95"
                       >
                         Get a VPN Key
                       </button>
@@ -1014,7 +1086,7 @@ function DashboardPage() {
                   )}
                 </div>
 
-                <div className="flex items-center justify-between rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-600/20 via-[#0c0c10] to-violet-600/20 p-5 shadow-[0_0_28px_rgba(37,99,235,0.14)] transition-all duration-300 hover:-translate-y-0.5">
+                <div className="flex items-center justify-between rounded-2xl border border-indigo-500/25 bg-gradient-to-r from-cyan-500/15 via-[#0d1017] to-indigo-600/20 p-5 shadow-[0_0_28px_rgba(99,102,241,0.12)] transition-all duration-300 hover:-translate-y-0.5">
                   <div>
                     <p className="text-base font-extrabold text-white">
                       Unlock the World with EspritAccess
@@ -1025,7 +1097,7 @@ function DashboardPage() {
                     <button
                       type="button"
                       onClick={() => setActiveTab("subscriptions")}
-                      className="mt-3 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-zinc-950 hover:bg-blue-50"
+                      className="mt-3 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-zinc-950 hover:bg-cyan-50"
                     >
                       Explore Plans →
                     </button>
@@ -1052,8 +1124,8 @@ function DashboardPage() {
                   <div
                     key={plan.code}
                     className={`flex flex-col justify-between rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1.5 ${plan.featured
-                        ? "border border-blue-500/70 bg-[#0e0f17] shadow-[0_0_40px_rgba(37,99,235,0.3)]"
-                        : "border border-white/10 bg-[#0c0c10] hover:border-white/25"
+                        ? "border border-cyan-500/50 bg-[#101420] shadow-[0_0_40px_rgba(6,182,212,0.2)]"
+                        : "border border-white/[0.06] bg-[#0d1017] hover:border-cyan-500/35"
                       }`}
                   >
                     <div>
@@ -1084,7 +1156,7 @@ function DashboardPage() {
                       onClick={() =>
                         handleCheckout(plan.code, plan.name, plan.price)
                       }
-                      className="mt-6 w-full rounded-full bg-blue-600 py-2.5 text-xs font-bold text-white shadow-[0_0_20px_rgba(37,99,235,0.6)] transition hover:bg-blue-500 disabled:opacity-60"
+                      className="mt-6 w-full rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 py-2.5 text-xs font-bold text-white shadow-[0_0_20px_rgba(6,182,212,0.4)] transition hover:opacity-95 disabled:opacity-60"
                     >
                       {payingCode === plan.code
                         ? "Opening Paystack..."
@@ -1109,7 +1181,7 @@ function DashboardPage() {
                     Naira.
                   </p>
                 </div>
-                <span className="rounded-full border border-emerald-500/30 bg-emerald-950/40 px-3 py-1 text-[11px] font-semibold text-emerald-300">
+                <span className="rounded-full border border-emerald-500/25 bg-emerald-950/40 px-3 py-1 text-[11px] font-semibold text-emerald-300">
                   ● Live Stock Available
                 </span>
               </div>
@@ -1118,7 +1190,7 @@ function DashboardPage() {
                 {VIRTUAL_NUMBERS.map((num) => (
                   <div
                     key={num.code}
-                    className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#0c0c10] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/50 hover:shadow-[0_0_25px_rgba(6,182,212,0.18)]"
+                    className="flex flex-col justify-between rounded-2xl border border-white/[0.06] bg-[#0d1017] p-5 shadow-[0_0_20px_rgba(0,0,0,0.4)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/45 hover:shadow-[0_0_25px_rgba(6,182,212,0.16)]"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2">
@@ -1131,12 +1203,12 @@ function DashboardPage() {
                           />
                           {num.country} ({num.dialCode})
                         </span>
-                        <span className="shrink-0 rounded-full bg-blue-500/15 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300">
+                        <span className="shrink-0 rounded-full bg-cyan-500/15 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300">
                           {num.tag}
                         </span>
                       </div>
 
-                      <div className="mt-3 rounded-xl border border-white/10 bg-[#050507] px-3 py-2 font-mono text-xs text-cyan-300">
+                      <div className="mt-3 rounded-xl border border-white/[0.06] bg-[#06070a] px-3 py-2 font-mono text-xs text-cyan-300">
                         Sample: {num.sampleNumber}
                       </div>
 
@@ -1164,7 +1236,7 @@ function DashboardPage() {
                       </div>
                     </div>
 
-                    <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
+                    <div className="mt-5 flex items-center justify-between border-t border-white/[0.06] pt-4">
                       <p className="text-xl font-extrabold text-white">
                         ₦{num.price.toLocaleString()}
                       </p>
@@ -1178,7 +1250,7 @@ function DashboardPage() {
                             num.price
                           )
                         }
-                        className="rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-[0_0_18px_rgba(37,99,235,0.6)] transition hover:bg-blue-500 disabled:opacity-60"
+                        className="rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-[0_0_18px_rgba(6,182,212,0.4)] transition hover:opacity-95 disabled:opacity-60"
                       >
                         {payingCode === num.code ? "Opening..." : "Get Number"}
                       </button>
@@ -1209,8 +1281,8 @@ function DashboardPage() {
                     type="button"
                     onClick={() => setSelectedNiche(niche)}
                     className={`rounded-full px-4 py-2 text-xs font-semibold transition ${selectedNiche === niche
-                        ? "bg-blue-600 text-white shadow-[0_0_18px_rgba(37,99,235,0.6)]"
-                        : "border border-white/10 bg-[#0c0c10] text-zinc-300 hover:border-white/30"
+                        ? "bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-[0_0_18px_rgba(6,182,212,0.4)]"
+                        : "border border-white/[0.07] bg-[#0d1017] text-zinc-300 hover:border-cyan-500/40"
                       }`}
                   >
                     {niche}
@@ -1224,7 +1296,7 @@ function DashboardPage() {
                 ).map((book) => (
                   <div
                     key={book.code}
-                    className="flex flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c10] transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-[0_0_25px_rgba(37,99,235,0.2)]"
+                    className="flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0d1017] shadow-[0_0_20px_rgba(0,0,0,0.4)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/45 hover:shadow-[0_0_25px_rgba(6,182,212,0.16)]"
                   >
                     <div
                       className={`flex items-center gap-4 bg-gradient-to-br ${book.gradient} p-4`}
@@ -1233,7 +1305,7 @@ function DashboardPage() {
                         src={book.cover}
                         alt={book.title}
                         loading="lazy"
-                        className="h-28 w-20 shrink-0 rounded-lg border border-white/20 object-cover shadow-lg"
+                        className="h-28 w-20 shrink-0 rounded-lg border border-white/15 object-cover shadow-lg"
                       />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-white/80">
@@ -1264,7 +1336,7 @@ function DashboardPage() {
                         onClick={() =>
                           handleCheckout(book.code, book.title, book.price)
                         }
-                        className="rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-[0_0_15px_rgba(37,99,235,0.55)] transition hover:bg-blue-500 disabled:opacity-60"
+                        className="rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] transition hover:opacity-95 disabled:opacity-60"
                       >
                         {payingCode === book.code ? "Opening..." : "Buy E-book"}
                       </button>
@@ -1277,7 +1349,7 @@ function DashboardPage() {
 
           {/* BILLING & PAYMENTS TAB */}
           {activeTab === "billing" && (
-            <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-6">
+            <div className="rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6">
               <h2 className="text-lg font-bold text-white">
                 Billing & Payment History
               </h2>
@@ -1288,7 +1360,7 @@ function DashboardPage() {
                   {orders.map((o) => (
                     <div
                       key={o.id}
-                      className="flex items-center justify-between rounded-xl border border-white/10 bg-[#050507] px-4 py-3 text-xs"
+                      className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-[#06070a] px-4 py-3 text-xs"
                     >
                       <div>
                         <p className="font-bold text-white">
@@ -1327,7 +1399,7 @@ function DashboardPage() {
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
-                <div className="space-y-4 rounded-2xl border border-white/10 bg-[#0c0c10] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-[0_0_25px_rgba(37,99,235,0.2)]">
+                <div className="space-y-4 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/40 hover:shadow-[0_0_25px_rgba(6,182,212,0.16)]">
                   <div className="flex items-center gap-2 text-cyan-400">
                     <KeyRound className="h-5 w-5" />
                     <h2 className="text-sm font-bold text-white">
@@ -1338,12 +1410,12 @@ function DashboardPage() {
                     Generate a 16-character encrypted password for your
                     accounts.
                   </p>
-                  <div className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#050507] px-3.5 py-2.5 font-mono text-xs text-cyan-300">
+                  <div className="flex items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-[#06070a] px-3.5 py-2.5 font-mono text-xs text-cyan-300">
                     <span className="truncate">{generatedPass}</span>
                     <button
                       type="button"
                       onClick={() => handleCopyKey(generatedPass)}
-                      className="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-600 px-3 py-1.5 font-sans text-xs font-semibold text-white hover:bg-blue-500"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-3 py-1.5 font-sans text-xs font-semibold text-white"
                     >
                       {copiedKey ? (
                         <Check className="h-3.5 w-3.5" />
@@ -1356,13 +1428,13 @@ function DashboardPage() {
                   <button
                     type="button"
                     onClick={generateStrongPassword}
-                    className="w-full rounded-full border border-white/15 bg-white/[0.04] py-2 text-xs font-bold text-white transition hover:border-cyan-400/60"
+                    className="w-full rounded-full border border-white/[0.08] bg-white/[0.03] py-2 text-xs font-bold text-white transition hover:border-cyan-400/50"
                   >
                     Generate New Password
                   </button>
                 </div>
 
-                <div className="space-y-3 rounded-2xl border border-white/10 bg-[#0c0c10] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40">
+                <div className="space-y-3 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40">
                   <div className="flex items-center gap-2 text-cyan-400">
                     <Shield className="h-5 w-5" />
                     <h2 className="text-sm font-bold text-white">
@@ -1379,7 +1451,7 @@ function DashboardPage() {
                   ].map((item) => (
                     <div
                       key={item.label}
-                      className="flex items-center justify-between rounded-xl border border-white/10 bg-[#050507] px-4 py-2.5 text-xs"
+                      className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-[#06070a] px-4 py-2.5 text-xs"
                     >
                       <span className="text-zinc-300">{item.label}</span>
                       <span className="font-bold text-emerald-400">
@@ -1408,7 +1480,7 @@ function DashboardPage() {
               <div className="grid gap-6 lg:grid-cols-2">
                 <form
                   onSubmit={handleUpdateProfile}
-                  className="space-y-4 rounded-2xl border border-white/10 bg-[#0c0c10] p-6"
+                  className="space-y-4 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6"
                 >
                   <h2 className="text-sm font-bold text-white">
                     Profile Information
@@ -1421,7 +1493,7 @@ function DashboardPage() {
                       type="email"
                       disabled
                       value={user?.email || ""}
-                      className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#050507] px-3.5 py-2.5 text-xs text-zinc-400"
+                      className="mt-1.5 w-full rounded-xl border border-white/[0.06] bg-[#06070a] px-3.5 py-2.5 text-xs text-zinc-400"
                     />
                   </div>
                   <div>
@@ -1433,13 +1505,13 @@ function DashboardPage() {
                       value={fullNameInput}
                       onChange={(e) => setFullNameInput(e.target.value)}
                       placeholder={displayName}
-                      className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#050507] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none"
+                      className="mt-1.5 w-full rounded-xl border border-white/[0.08] bg-[#06070a] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-cyan-500/60 focus:outline-none"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={savingSettings}
-                    className="rounded-full bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-[0_0_18px_rgba(37,99,235,0.6)] hover:bg-blue-500 disabled:opacity-60"
+                    className="rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-6 py-2.5 text-xs font-bold text-white shadow-[0_0_18px_rgba(6,182,212,0.4)] hover:opacity-95 disabled:opacity-60"
                   >
                     {savingSettings ? "Saving..." : "Save Profile"}
                   </button>
@@ -1447,7 +1519,7 @@ function DashboardPage() {
 
                 <form
                   onSubmit={handleUpdatePassword}
-                  className="space-y-4 rounded-2xl border border-white/10 bg-[#0c0c10] p-6"
+                  className="space-y-4 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6"
                 >
                   <h2 className="text-sm font-bold text-white">
                     Change Password
@@ -1461,22 +1533,22 @@ function DashboardPage() {
                       value={newPasswordInput}
                       onChange={(e) => setNewPasswordInput(e.target.value)}
                       placeholder="Minimum 6 characters"
-                      className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#050507] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none"
+                      className="mt-1.5 w-full rounded-xl border border-white/[0.08] bg-[#06070a] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-cyan-500/60 focus:outline-none"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={savingSettings}
-                    className="rounded-full bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-[0_0_18px_rgba(37,99,235,0.6)] hover:bg-blue-500 disabled:opacity-60"
+                    className="rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-6 py-2.5 text-xs font-bold text-white shadow-[0_0_18px_rgba(6,182,212,0.4)] hover:opacity-95 disabled:opacity-60"
                   >
                     Update Password
                   </button>
 
-                  <div className="border-t border-white/10 pt-4">
+                  <div className="border-t border-white/[0.06] pt-4">
                     <button
                       type="button"
                       onClick={handleSignOut}
-                      className="inline-flex items-center gap-2 rounded-full border border-rose-500/40 bg-rose-950/30 px-4 py-2 text-xs font-bold text-rose-300 hover:bg-rose-950/60"
+                      className="inline-flex items-center gap-2 rounded-full border border-rose-500/30 bg-rose-950/25 px-4 py-2 text-xs font-bold text-rose-300 hover:bg-rose-950/50"
                     >
                       <LogOut className="h-3.5 w-3.5" /> Sign Out of Account
                     </button>
@@ -1498,7 +1570,7 @@ function DashboardPage() {
                 </p>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2 rounded-2xl border border-white/10 bg-[#0c0c10] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50">
+                <div className="space-y-2 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/40">
                   <Mail className="h-5 w-5 text-cyan-400" />
                   <h3 className="text-sm font-bold text-white">
                     Email Support
@@ -1511,7 +1583,7 @@ function DashboardPage() {
                     .
                   </p>
                 </div>
-                <div className="space-y-2 rounded-2xl border border-white/10 bg-[#0c0c10] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/50">
+                <div className="space-y-2 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40">
                   <HelpCircle className="h-5 w-5 text-emerald-400" />
                   <h3 className="text-sm font-bold text-white">
                     Live WhatsApp Desk
@@ -1527,7 +1599,7 @@ function DashboardPage() {
 
           {/* REFERRAL PROGRAM TAB */}
           {activeTab === "referrals" && (
-            <div className="space-y-4 rounded-2xl border border-blue-500/30 bg-[#0c0c10] p-6 shadow-[0_0_25px_rgba(37,99,235,0.12)]">
+            <div className="space-y-4 rounded-2xl border border-cyan-500/20 bg-[#0d1017] p-6 shadow-[0_0_25px_rgba(6,182,212,0.1)]">
               <div className="flex items-center gap-2 text-cyan-400">
                 <Users className="h-5 w-5" />
                 <h2 className="text-lg font-bold text-white">
@@ -1538,7 +1610,7 @@ function DashboardPage() {
                 Share your personal EspritAccess link. You earn ₦500 in wallet
                 credit for every friend who activates a VPN plan.
               </p>
-              <div className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#050507] px-4 py-3 font-mono text-xs text-cyan-300">
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-[#06070a] px-4 py-3 font-mono text-xs text-cyan-300">
                 <span className="truncate">
                   {`https://www.espritaccess.com.ng/auth?ref=${user?.id.slice(0, 8)}`}
                 </span>
@@ -1551,7 +1623,7 @@ function DashboardPage() {
                     setCopiedRef(true);
                     setTimeout(() => setCopiedRef(false), 2000);
                   }}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-600 px-3.5 py-1.5 font-sans text-xs font-semibold text-white hover:bg-blue-500"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-3.5 py-1.5 font-sans text-xs font-semibold text-white"
                 >
                   {copiedRef ? (
                     <Check className="h-3.5 w-3.5" />
@@ -1566,10 +1638,10 @@ function DashboardPage() {
 
           {/* NOTIFICATIONS TAB */}
           {activeTab === "notifications" && (
-            <div className="space-y-4 rounded-2xl border border-white/10 bg-[#0c0c10] p-6">
+            <div className="space-y-4 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6">
               <h2 className="text-lg font-bold text-white">Notifications</h2>
               <div className="space-y-3">
-                <div className="rounded-xl border border-white/10 bg-[#050507] p-4">
+                <div className="rounded-xl border border-white/[0.06] bg-[#06070a] p-4">
                   <p className="text-xs font-bold text-white">
                     Welcome to EspritAccess 🎉
                   </p>
@@ -1578,7 +1650,7 @@ function DashboardPage() {
                     E-books to get started.
                   </p>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-[#050507] p-4">
+                <div className="rounded-xl border border-white/[0.06] bg-[#06070a] p-4">
                   <p className="text-xs font-bold text-white">
                     Paystack NGN Checkout Ready
                   </p>
