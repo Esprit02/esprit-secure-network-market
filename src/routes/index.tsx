@@ -22,31 +22,43 @@ const SERVICES = [
     icon: Shield,
     title: 'VPN Services',
     desc: 'Fast, encrypted, and private browsing with instant WireGuard key delivery.',
+    glow: 'group-hover:border-blue-500/50 group-hover:shadow-[0_0_30px_rgba(59,130,246,0.2)]',
+    iconBg: 'bg-blue-500/15 text-blue-400 ring-blue-500/30',
   },
   {
     icon: Smartphone,
     title: 'Virtual SMS Numbers',
     desc: 'Receive OTPs and verifications globally without exposing your personal line.',
+    glow: 'group-hover:border-cyan-500/50 group-hover:shadow-[0_0_30px_rgba(6,182,212,0.2)]',
+    iconBg: 'bg-cyan-500/15 text-cyan-400 ring-cyan-500/30',
   },
   {
     icon: CreditCard,
     title: 'Digital Subscriptions',
     desc: 'The global subscriptions you rely on, activated in minutes with Naira.',
+    glow: 'group-hover:border-violet-500/50 group-hover:shadow-[0_0_30px_rgba(139,92,246,0.2)]',
+    iconBg: 'bg-violet-500/15 text-violet-400 ring-violet-500/30',
   },
   {
     icon: Sparkles,
     title: 'AI Tools & Software',
     desc: 'Practical AI tools and software licenses for work, study, and creativity.',
+    glow: 'group-hover:border-cyan-500/50 group-hover:shadow-[0_0_30px_rgba(6,182,212,0.2)]',
+    iconBg: 'bg-cyan-500/15 text-cyan-400 ring-cyan-500/30',
   },
   {
     icon: Lock,
     title: 'Security & Privacy Tools',
     desc: 'Password managers, 2FA essentials, and privacy-first digital utilities.',
+    glow: 'group-hover:border-emerald-500/50 group-hover:shadow-[0_0_30px_rgba(16,185,129,0.2)]',
+    iconBg: 'bg-emerald-500/15 text-emerald-400 ring-emerald-500/30',
   },
   {
     icon: BookOpen,
     title: 'E-books & Digital Guides',
-    desc: 'Actionable tech guides, templates, and digital resources that help you grow.',
+    desc: 'Best-selling e-books across Finance, Health, Self-Development, Gospel, and Novels.',
+    glow: 'group-hover:border-blue-500/50 group-hover:shadow-[0_0_30px_rgba(59,130,246,0.2)]',
+    iconBg: 'bg-blue-500/15 text-blue-400 ring-blue-500/30',
   },
 ]
 
@@ -136,17 +148,19 @@ function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0)
 
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-100 selection:bg-blue-600 selection:text-white">
-      {/* Subtle Blue Ambient Glow */}
+    <div className="min-h-screen bg-[#050507] text-zinc-100 selection:bg-blue-600 selection:text-white">
+      {/* Multi-Tone Ambient Lighting (Blue + Cyan + Violet on Pure Black) */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-blue-600/20 blur-[130px]" />
+        <div className="absolute -top-40 left-1/2 h-[480px] w-[720px] -translate-x-1/2 rounded-full bg-blue-600/20 blur-[140px]" />
+        <div className="absolute top-1/3 -left-32 h-[360px] w-[360px] rounded-full bg-cyan-500/12 blur-[130px]" />
+        <div className="absolute bottom-0 right-0 h-[380px] w-[420px] rounded-full bg-violet-600/12 blur-[140px]" />
       </div>
 
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b border-blue-500/15 bg-[#030712]/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-sm font-black text-white shadow-[0_0_15px_rgba(37,99,235,0.7)]">
+      {/* Floating Glass Pill Menu Bar */}
+      <div className="sticky top-4 z-50 mx-auto max-w-5xl px-4">
+        <header className="flex items-center justify-between rounded-full border border-white/10 bg-[#0b0b0f]/80 px-4 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.75)] backdrop-blur-xl sm:px-6">
+          <Link to="/" className="flex items-center gap-2.5 text-lg font-bold tracking-tight">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 text-xs font-black text-white shadow-[0_0_18px_rgba(59,130,246,0.75)]">
               EA
             </span>
             <span className="text-white">
@@ -154,67 +168,67 @@ function HomePage() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-7 text-sm font-medium text-slate-300 md:flex">
-            <a href="#services" className="transition hover:text-blue-400">
+          <nav className="hidden items-center gap-7 text-xs font-semibold text-zinc-400 md:flex">
+            <a href="#services" className="transition hover:text-white">
               Services
             </a>
-            <a href="#pricing" className="transition hover:text-blue-400">
+            <a href="#pricing" className="transition hover:text-white">
               Pricing
             </a>
-            <a href="#testimonials" className="transition hover:text-blue-400">
+            <a href="#testimonials" className="transition hover:text-white">
               Testimonials
             </a>
-            <a href="#faq" className="transition hover:text-blue-400">
+            <a href="#faq" className="transition hover:text-white">
               FAQ
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <Link
               to="/auth"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-200 transition hover:text-blue-400"
+              className="rounded-full px-4 py-2 text-xs font-semibold text-zinc-300 transition hover:text-white"
             >
               Sign In
             </Link>
             <Link
               to="/auth"
-              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(37,99,235,0.6)] transition hover:bg-blue-500"
+              className="rounded-full bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-[0_0_22px_rgba(37,99,235,0.75)] transition hover:bg-blue-500"
             >
               Get Started
             </Link>
           </div>
-        </div>
-      </header>
+        </header>
+      </div>
 
       {/* Hero Section */}
-      <section className="relative mx-auto max-w-6xl px-6 pb-20 pt-20 text-center md:pt-28">
-        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-950/60 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-300 shadow-[0_0_20px_rgba(37,99,235,0.25)]">
-          <span className="h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_8px_#60a5fa]" />
+      <section className="relative mx-auto max-w-5xl px-6 pb-20 pt-20 text-center md:pt-28">
+        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-semibold tracking-wide text-cyan-300 shadow-[0_0_25px_rgba(6,182,212,0.18)]">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
           Instant Activation • Pay in Naira
         </div>
 
         <h1 className="mx-auto mt-6 max-w-4xl text-4xl font-extrabold tracking-tight text-white sm:text-6xl">
           Your Gateway to{' '}
-          <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-violet-400 bg-clip-text text-transparent">
             Digital Access
           </span>
         </h1>
 
-        <p className="mx-auto mt-6 max-w-2xl text-base text-slate-400 sm:text-lg">
+        <p className="mx-auto mt-6 max-w-2xl text-base text-zinc-400 sm:text-lg">
           Protect your privacy, browse securely with high-speed encrypted VPNs, and unlock virtual
-          numbers, AI tools, and digital subscriptions—all in one clean platform.
+          SMS numbers, AI tools, and best-selling e-books—all in one fast platform.
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Link
             to="/auth"
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 text-sm font-bold text-white shadow-[0_0_25px_rgba(37,99,235,0.65)] transition hover:bg-blue-500"
+            className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-8 py-3.5 text-sm font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.75)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-500"
           >
             Get Started <ArrowRight className="h-4 w-4" />
           </Link>
           <a
             href="#pricing"
-            className="inline-flex items-center gap-2 rounded-xl border border-blue-500/30 bg-blue-950/40 px-7 py-3.5 text-sm font-bold text-blue-200 transition hover:border-blue-400 hover:bg-blue-950/70"
+            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-8 py-3.5 text-sm font-bold text-zinc-200 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-400/50 hover:text-white"
           >
             View Pricing
           </a>
@@ -225,9 +239,12 @@ function HomePage() {
       <section id="services" className="relative mx-auto max-w-6xl px-6 py-20">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-white sm:text-4xl">
-            Everything you need, <span className="text-blue-400">one platform</span>
+            Everything you need,{' '}
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+              one platform
+            </span>
           </h2>
-          <p className="mt-3 text-slate-400">
+          <p className="mt-3 text-sm text-zinc-400">
             From encrypted connectivity to everyday digital products.
           </p>
         </div>
@@ -238,13 +255,15 @@ function HomePage() {
             return (
               <div
                 key={s.title}
-                className="rounded-2xl border border-blue-500/15 bg-[#070d1f] p-6 transition hover:border-blue-500/45 hover:shadow-[0_0_30px_rgba(37,99,235,0.18)]"
+                className={`group rounded-2xl border border-white/10 bg-[#0c0c10] p-6 transition-all duration-300 hover:-translate-y-1.5 ${s.glow}`}
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/30">
+                <div
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl ring-1 ${s.iconBg}`}
+                >
                   <Icon className="h-5 w-5" />
                 </div>
                 <h3 className="mt-4 text-lg font-bold text-white">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-400">{s.desc}</p>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{s.desc}</p>
               </div>
             )
           })}
@@ -255,9 +274,12 @@ function HomePage() {
       <section id="pricing" className="relative mx-auto max-w-6xl px-6 py-20">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-white sm:text-4xl">
-            Simple, transparent <span className="text-blue-400">pricing</span>
+            Simple, transparent{' '}
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+              pricing
+            </span>
           </h2>
-          <p className="mt-3 text-slate-400">
+          <p className="mt-3 text-sm text-zinc-400">
             Choose a plan and get instant dashboard access via Paystack.
           </p>
         </div>
@@ -266,24 +288,24 @@ function HomePage() {
           {PLANS.map((plan) => (
             <div
               key={plan.name}
-              className={`flex flex-col justify-between rounded-2xl p-8 transition ${plan.featured
-                  ? 'border-2 border-blue-500 bg-[#08122b] shadow-[0_0_40px_rgba(37,99,235,0.3)]'
-                  : 'border border-blue-500/15 bg-[#070d1f]'
+              className={`flex flex-col justify-between rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1.5 ${plan.featured
+                ? 'border border-blue-500/70 bg-[#0e0f17] shadow-[0_0_45px_rgba(37,99,235,0.28)]'
+                : 'border border-white/10 bg-[#0c0c10] hover:border-white/25'
                 }`}
             >
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-blue-400">
+                <span className="text-xs font-bold uppercase tracking-widest text-cyan-400">
                   {plan.tag}
                 </span>
                 <h3 className="mt-2 text-2xl font-bold text-white">{plan.name}</h3>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold text-white">{plan.price}</span>
-                  <span className="text-sm text-slate-400">{plan.period}</span>
+                  <span className="text-sm text-zinc-400">{plan.period}</span>
                 </div>
-                <ul className="mt-6 space-y-3 text-sm text-slate-300">
+                <ul className="mt-6 space-y-3 text-sm text-zinc-300">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-center gap-2.5">
-                      <Check className="h-4 w-4 shrink-0 text-blue-400" />
+                      <Check className="h-4 w-4 shrink-0 text-cyan-400" />
                       {f}
                     </li>
                   ))}
@@ -292,9 +314,9 @@ function HomePage() {
 
               <Link
                 to="/auth"
-                className={`mt-8 block w-full rounded-xl py-3 text-center text-sm font-bold text-white transition ${plan.featured
-                    ? 'bg-blue-600 shadow-[0_0_25px_rgba(37,99,235,0.65)] hover:bg-blue-500'
-                    : 'bg-blue-600/80 hover:bg-blue-600'
+                className={`mt-8 block w-full rounded-full py-3 text-center text-sm font-bold text-white transition ${plan.featured
+                  ? 'bg-blue-600 shadow-[0_0_25px_rgba(37,99,235,0.7)] hover:bg-blue-500'
+                  : 'bg-white/10 hover:bg-blue-600'
                   }`}
               >
                 Get Started
@@ -308,7 +330,10 @@ function HomePage() {
       <section id="testimonials" className="relative mx-auto max-w-6xl px-6 py-20">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-white sm:text-4xl">
-            Trusted by <span className="text-blue-400">users across Nigeria</span>
+            Trusted by{' '}
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+              users across Nigeria
+            </span>
           </h2>
         </div>
 
@@ -316,17 +341,17 @@ function HomePage() {
           {TESTIMONIALS.map((t) => (
             <div
               key={t.name}
-              className="rounded-2xl border border-blue-500/15 bg-[#070d1f] p-6"
+              className="rounded-2xl border border-white/10 bg-[#0c0c10] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
             >
-              <div className="flex gap-1 text-blue-400">
+              <div className="flex gap-1 text-cyan-400">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-blue-400" />
+                  <Star key={i} className="h-4 w-4 fill-cyan-400" />
                 ))}
               </div>
-              <p className="mt-4 text-sm leading-relaxed text-slate-300">"{t.quote}"</p>
-              <div className="mt-5 border-t border-blue-500/10 pt-4">
+              <p className="mt-4 text-sm leading-relaxed text-zinc-300">"{t.quote}"</p>
+              <div className="mt-5 border-t border-white/10 pt-4">
                 <p className="text-sm font-bold text-white">{t.name}</p>
-                <p className="text-xs text-slate-400">{t.role}</p>
+                <p className="text-xs text-zinc-400">{t.role}</p>
               </div>
             </div>
           ))}
@@ -337,7 +362,10 @@ function HomePage() {
       <section id="faq" className="relative mx-auto max-w-3xl px-6 py-20">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-white sm:text-4xl">
-            Frequently Asked <span className="text-blue-400">Questions</span>
+            Frequently Asked{' '}
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+              Questions
+            </span>
           </h2>
         </div>
 
@@ -347,7 +375,7 @@ function HomePage() {
             return (
               <div
                 key={item.q}
-                className="overflow-hidden rounded-xl border border-blue-500/20 bg-[#070d1f]"
+                className="overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c10]"
               >
                 <button
                   type="button"
@@ -356,12 +384,12 @@ function HomePage() {
                 >
                   <span>{item.q}</span>
                   <ChevronDown
-                    className={`h-4 w-4 text-blue-400 transition-transform ${isOpen ? 'rotate-180' : ''
+                    className={`h-4 w-4 text-cyan-400 transition-transform ${isOpen ? 'rotate-180' : ''
                       }`}
                   />
                 </button>
                 {isOpen && (
-                  <div className="border-t border-blue-500/10 px-6 py-4 text-sm text-slate-400">
+                  <div className="border-t border-white/10 px-6 py-4 text-sm text-zinc-400">
                     {item.a}
                   </div>
                 )}
@@ -373,16 +401,19 @@ function HomePage() {
 
       {/* Bottom CTA */}
       <section className="mx-auto max-w-5xl px-6 pb-20">
-        <div className="rounded-3xl border border-blue-500/30 bg-gradient-to-br from-blue-950/80 via-[#070d1f] to-[#030712] p-10 text-center shadow-[0_0_50px_rgba(37,99,235,0.2)]">
+        <div className="rounded-3xl border border-blue-500/30 bg-gradient-to-br from-blue-600/20 via-[#0c0c10] to-violet-600/15 p-10 text-center shadow-[0_0_50px_rgba(37,99,235,0.18)]">
           <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-            Your Digital Freedom, <span className="text-blue-400">Our Priority.</span>
+            Your Digital Freedom,{' '}
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+              Our Priority.
+            </span>
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm text-slate-300">
-            Create your account in seconds and unlock instant VPN and digital access.
+          <p className="mx-auto mt-3 max-w-xl text-sm text-zinc-300">
+            Create your account in seconds and unlock instant VPN, Virtual SMS, and digital access.
           </p>
           <Link
             to="/auth"
-            className="mt-7 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-3.5 text-sm font-bold text-white shadow-[0_0_25px_rgba(37,99,235,0.65)] transition hover:bg-blue-500"
+            className="mt-7 inline-flex items-center gap-2 rounded-full bg-blue-600 px-8 py-3.5 text-sm font-bold text-white shadow-[0_0_28px_rgba(37,99,235,0.75)] transition hover:bg-blue-500"
           >
             Get Started Now <ArrowRight className="h-4 w-4" />
           </Link>
@@ -390,7 +421,7 @@ function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-blue-500/15 bg-[#02050e] py-10 text-center text-xs text-slate-500">
+      <footer className="border-t border-white/10 bg-[#040406] py-10 text-center text-xs text-zinc-500">
         <p>© 2026 EspritAccess — Your Gateway to Digital Access. All rights reserved.</p>
       </footer>
     </div>

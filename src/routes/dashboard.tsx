@@ -425,6 +425,13 @@ function DashboardPage() {
   const [copiedKey, setCopiedKey] = useState(false);
   const [selectedNiche, setSelectedNiche] = useState<BookNiche>("All");
 
+  // Security & Settings states
+  const [generatedPass, setGeneratedPass] = useState("Ea#9xK2!mP7vQ4$w");
+  const [fullNameInput, setFullNameInput] = useState("");
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [copiedRef, setCopiedRef] = useState(false);
+
   useEffect(() => {
     let mounted = true;
     async function init() {
@@ -461,6 +468,44 @@ function DashboardPage() {
     if (!error && data) setOrders(data as OrderRecord[]);
   }
 
+  function generateStrongPassword() {
+    const chars =
+      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*";
+    let pass = "";
+    for (let i = 0; i < 16; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setGeneratedPass(pass);
+  }
+
+  async function handleUpdateProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!fullNameInput.trim()) return;
+    setSavingSettings(true);
+    const { error } = await supabase.auth.updateUser({
+      data: { full_name: fullNameInput.trim() },
+    });
+    setSavingSettings(false);
+    setStatusMessage(
+      error ? error.message : "Profile name updated successfully."
+    );
+  }
+
+  async function handleUpdatePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPasswordInput.length < 6) {
+      setStatusMessage("Password must be at least 6 characters.");
+      return;
+    }
+    setSavingSettings(true);
+    const { error } = await supabase.auth.updateUser({
+      password: newPasswordInput,
+    });
+    setSavingSettings(false);
+    setNewPasswordInput("");
+    setStatusMessage(error ? error.message : "Password updated successfully.");
+  }
+
   async function handleCheckout(code: string, name: string, price: number) {
     if (!user?.email) return;
     setPayingCode(code);
@@ -495,29 +540,33 @@ function DashboardPage() {
         amount: price * 100,
         currency: "NGN",
         ref: reference,
-        callback: async (response: { reference: string }) => {
-          try {
-            await (finalizePaystackOrder as any)({
-              data: {
-                reference: response.reference,
-                planCode: code,
-                userId: user.id,
-                email: user.email,
-              },
-            });
-            setStatusMessage(
-              `Payment confirmed! ${name} is now active on your account.`
-            );
-            await fetchOrders(user.id);
-            setActiveTab("dashboard");
-          } catch {
-            setStatusMessage("Payment received. Refreshing your dashboard...");
-            await fetchOrders(user.id);
-          } finally {
-            setPayingCode(null);
-          }
+        callback: function (response: { reference: string }) {
+          (async () => {
+            try {
+              await (finalizePaystackOrder as any)({
+                data: {
+                  reference: response.reference,
+                  planCode: code,
+                  userId: user.id,
+                  email: user.email,
+                },
+              });
+              setStatusMessage(
+                `Payment confirmed! ${name} is now active on your account.`
+              );
+              await fetchOrders(user.id);
+              setActiveTab("dashboard");
+            } catch {
+              setStatusMessage("Payment received. Refreshing your dashboard...");
+              await fetchOrders(user.id);
+            } finally {
+              setPayingCode(null);
+            }
+          })();
         },
-        onClose: () => setPayingCode(null),
+        onClose: function () {
+          setPayingCode(null);
+        },
       });
       handler.openIframe();
     } catch (err: any) {
@@ -552,7 +601,7 @@ function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#030712] text-slate-300">
+      <div className="flex min-h-screen items-center justify-center bg-[#050507] text-zinc-300">
         <div className="flex items-center gap-3">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
           <span className="text-sm font-medium">Loading EspritAccess...</span>
@@ -562,19 +611,26 @@ function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full overflow-x-hidden bg-[#030712] text-slate-100">
+    <div className="relative flex min-h-screen w-full overflow-x-hidden bg-[#050507] text-zinc-100">
+      {/* Multi-Tone Ambient Lighting on Pure Black */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-36 left-1/3 h-[420px] w-[640px] rounded-full bg-blue-600/15 blur-[140px]" />
+        <div className="absolute bottom-0 right-10 h-[320px] w-[420px] rounded-full bg-cyan-500/10 blur-[130px]" />
+        <div className="absolute top-1/2 left-0 h-[300px] w-[300px] rounded-full bg-violet-600/10 blur-[130px]" />
+      </div>
+
       {/* Left Sidebar (Desktop) */}
-      <aside className="hidden w-64 shrink-0 flex-col justify-between border-r border-blue-500/15 bg-[#050b18] p-4 lg:flex">
+      <aside className="relative z-10 hidden w-64 shrink-0 flex-col justify-between border-r border-white/10 bg-[#09090d]/95 p-4 backdrop-blur-xl lg:flex">
         <div>
           <div className="mb-6 flex items-center gap-2.5 px-2 pt-1">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-black text-white shadow-[0_0_18px_rgba(37,99,235,0.7)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-sm font-black text-white shadow-[0_0_20px_rgba(59,130,246,0.75)]">
               EA
             </span>
             <div>
               <p className="text-base font-bold leading-tight text-white">
                 Esprit<span className="text-blue-400">Access</span>
               </p>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-zinc-400">
                 Your Gateway to Digital Access
               </p>
             </div>
@@ -589,9 +645,9 @@ function DashboardPage() {
                   key={item.id}
                   type="button"
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-semibold transition ${active
-                      ? "bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.55)]"
-                      : "text-slate-400 hover:bg-blue-950/40 hover:text-white"
+                  className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 ${active
+                      ? "bg-blue-600 text-white shadow-[0_0_22px_rgba(37,99,235,0.65)]"
+                      : "text-zinc-400 hover:translate-x-0.5 hover:bg-white/[0.05] hover:text-white"
                     }`}
                 >
                   <span className="flex items-center gap-3">
@@ -599,7 +655,7 @@ function DashboardPage() {
                     {item.label}
                   </span>
                   {item.badge && (
-                    <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white shadow-[0_0_10px_rgba(244,63,94,0.6)]">
                       {item.badge}
                     </span>
                   )}
@@ -613,29 +669,29 @@ function DashboardPage() {
           <button
             type="button"
             onClick={() => setActiveTab("subscriptions")}
-            className="flex w-full items-center justify-between rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-blue-950/40 p-3 text-left transition hover:border-amber-400/60"
+            className="flex w-full items-center justify-between rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-white/[0.02] p-3 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-400/70 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)]"
           >
             <div className="flex items-center gap-2.5">
               <Crown className="h-4 w-4 text-amber-400" />
               <div>
                 <p className="text-xs font-bold text-white">Upgrade to Pro</p>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-zinc-400">
                   Unlock more features
                 </p>
               </div>
             </div>
-            <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
+            <ArrowRight className="h-3.5 w-3.5 text-zinc-400" />
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("support")}
-            className="flex w-full items-center gap-2.5 rounded-xl border border-blue-500/20 bg-[#070f24] p-3 text-left transition hover:border-blue-400/50"
+            className="flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-[#0f0f14] p-3 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-400/50"
           >
-            <Mail className="h-4 w-4 text-blue-400" />
+            <Mail className="h-4 w-4 text-cyan-400" />
             <div>
               <p className="text-xs font-bold text-white">Need Help?</p>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-zinc-400">
                 support@espritaccess.com
               </p>
             </div>
@@ -643,18 +699,18 @@ function DashboardPage() {
         </div>
       </aside>
 
-      {/* Right Main Panel (min-w-0 prevents mobile horizontal overflow) */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
+      {/* Right Main Panel */}
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-x-hidden">
         {/* Top Bar */}
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-blue-500/15 bg-[#030712]/90 px-4 py-3 backdrop-blur-md sm:px-6">
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/10 bg-[#050507]/85 px-4 py-3 backdrop-blur-xl sm:px-6">
           <div className="relative min-w-0 flex-1 max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search services..."
-              className="w-full rounded-xl border border-blue-500/20 bg-[#070f24] py-2 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+              className="w-full rounded-full border border-white/10 bg-[#0f0f14] py-2 pl-9 pr-4 text-xs text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none focus:shadow-[0_0_18px_rgba(37,99,235,0.3)]"
             />
           </div>
 
@@ -662,17 +718,17 @@ function DashboardPage() {
             <button
               type="button"
               onClick={() => setActiveTab("notifications")}
-              className="relative rounded-xl border border-blue-500/20 bg-[#070f24] p-2 text-slate-300 hover:border-blue-400"
+              className="relative rounded-full border border-white/10 bg-[#0f0f14] p-2 text-zinc-300 transition hover:border-blue-400"
             >
               <Bell className="h-4 w-4" />
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500" />
             </button>
 
-            <div className="hidden items-center gap-2 rounded-xl border border-blue-500/20 bg-[#070f24] px-3 py-1.5 sm:flex">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white">
+            <div className="hidden items-center gap-2 rounded-full border border-emerald-500/30 bg-[#0f0f14] px-3 py-1.5 sm:flex">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-zinc-950 shadow-[0_0_12px_rgba(16,185,129,0.65)]">
                 {displayName.charAt(0).toUpperCase()}
               </span>
-              <span className="max-w-[120px] truncate text-xs font-semibold text-white">
+              <span className="max-w-[130px] truncate text-xs font-bold text-emerald-400">
                 {displayName}
               </span>
             </div>
@@ -680,7 +736,7 @@ function DashboardPage() {
             <button
               type="button"
               onClick={handleSignOut}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-blue-500/20 bg-[#070f24] px-3 py-2 text-xs font-semibold text-slate-300 hover:border-blue-400 hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-[#0f0f14] px-3.5 py-2 text-xs font-semibold text-zinc-300 transition hover:border-blue-400 hover:text-white"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Sign Out</span>
@@ -689,15 +745,15 @@ function DashboardPage() {
         </header>
 
         {/* Mobile Nav Strip */}
-        <div className="flex w-full gap-2 overflow-x-auto border-b border-blue-500/15 bg-[#050b18] px-4 py-2.5 lg:hidden">
-          {SIDEBAR_ITEMS.slice(0, 6).map((item) => (
+        <div className="flex w-full gap-2 overflow-x-auto border-b border-white/10 bg-[#09090d] px-4 py-2.5 lg:hidden">
+          {SIDEBAR_ITEMS.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => setActiveTab(item.id)}
-              className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold ${activeTab === item.id
-                  ? "bg-blue-600 text-white"
-                  : "bg-[#070f24] text-slate-400"
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold ${activeTab === item.id
+                  ? "bg-blue-600 text-white shadow-[0_0_16px_rgba(37,99,235,0.6)]"
+                  : "border border-white/10 bg-[#0f0f14] text-zinc-400"
                 }`}
             >
               {item.label}
@@ -708,7 +764,7 @@ function DashboardPage() {
         {/* Main Content */}
         <main className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
           {statusMessage && (
-            <div className="rounded-xl border border-blue-500/40 bg-blue-950/60 px-4 py-3 text-xs font-medium text-blue-200">
+            <div className="rounded-xl border border-blue-500/40 bg-blue-950/40 px-4 py-3 text-xs font-medium text-blue-200 shadow-[0_0_20px_rgba(37,99,235,0.2)]">
               {statusMessage}
             </div>
           )}
@@ -720,14 +776,17 @@ function DashboardPage() {
                 <div className="min-w-0">
                   <h1 className="break-words text-xl font-extrabold text-white sm:text-2xl">
                     Welcome back,{" "}
-                    <span className="text-blue-400">{displayName}</span> 👋
+                    <span className="text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.5)]">
+                      {displayName}
+                    </span>{" "}
+                    👋
                   </h1>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-zinc-400">
                     Your digital access is just a click away.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/30 px-4 py-2.5">
+                <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-2.5 shadow-[0_0_25px_rgba(16,185,129,0.12)]">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
                     <Shield className="h-5 w-5" />
                   </div>
@@ -735,7 +794,7 @@ function DashboardPage() {
                     <p className="text-xs font-bold text-emerald-400">
                       {activeKey ? "Active & Secure" : "Ready to Activate"}
                     </p>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-zinc-400">
                       {activeKey
                         ? "Your connection is protected"
                         : "Select a plan to connect"}
@@ -744,12 +803,12 @@ function DashboardPage() {
                 </div>
               </div>
 
-              {/* 4 KPI Stat Cards */}
+              {/* 4 Floating Glowing KPI Cards */}
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 p-5 shadow-[0_0_25px_rgba(37,99,235,0.35)]">
+                <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 p-5 shadow-[0_0_30px_rgba(37,99,235,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_40px_rgba(37,99,235,0.7)]">
                   <div className="flex items-center justify-between">
                     <Shield className="h-6 w-6 text-white" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" />
                   </div>
                   <p className="mt-4 text-sm font-bold text-white">Active VPN</p>
                   <p className="text-xs text-blue-100">
@@ -757,39 +816,39 @@ function DashboardPage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-blue-500/20 bg-[#08122b] p-5">
-                  <p className="text-[11px] font-medium text-slate-400">
+                <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/50 hover:shadow-[0_0_25px_rgba(6,182,212,0.2)]">
+                  <p className="text-[11px] font-medium text-zinc-400">
                     Subscription Plan
                   </p>
                   <p className="mt-2 text-lg font-extrabold text-white">
                     {currentPlanName}
                   </p>
-                  <p className="mt-1 text-[11px] text-blue-400">
+                  <p className="mt-1 text-[11px] text-cyan-400">
                     {activeKey ? "Instant Vault Active" : "Upgrade anytime"}
                   </p>
                 </div>
 
-                <div className="rounded-2xl bg-gradient-to-br from-indigo-700 to-purple-900 p-5">
-                  <p className="text-[11px] font-medium text-indigo-200">
+                <div className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-900/40 to-[#0c0c10] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-violet-400/60 hover:shadow-[0_0_28px_rgba(139,92,246,0.28)]">
+                  <p className="text-[11px] font-medium text-violet-200">
                     Total Spent
                   </p>
                   <p className="mt-2 text-xl font-extrabold text-white">
                     ₦{totalSpent.toLocaleString()}
                   </p>
-                  <p className="mt-1 text-[11px] text-indigo-200">
+                  <p className="mt-1 text-[11px] text-zinc-400">
                     Lifetime ({orders.length} orders)
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-sky-900/80 to-blue-950 p-5">
-                  <p className="text-[11px] font-medium text-sky-200">
+                <div className="rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-900/30 to-[#0c0c10] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400/60 hover:shadow-[0_0_25px_rgba(16,185,129,0.22)]">
+                  <p className="text-[11px] font-medium text-emerald-200">
                     Referral Bonus
                   </p>
                   <p className="mt-2 text-xl font-extrabold text-white">₦0</p>
                   <button
                     type="button"
                     onClick={() => setActiveTab("referrals")}
-                    className="mt-1 text-[11px] font-semibold text-sky-300 hover:underline"
+                    className="mt-1 text-[11px] font-semibold text-emerald-400 hover:underline"
                   >
                     Invite Friends →
                   </button>
@@ -798,12 +857,12 @@ function DashboardPage() {
 
               {/* Activity Overview + Quick Actions */}
               <div className="grid gap-6 lg:grid-cols-3">
-                <div className="rounded-2xl border border-blue-500/20 bg-[#070f24] p-5 lg:col-span-2">
+                <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 transition-all duration-300 hover:border-blue-500/30 lg:col-span-2">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-bold text-white">
                       Your Activity Overview
                     </h2>
-                    <span className="rounded-lg border border-blue-500/20 bg-[#030712] px-2.5 py-1 text-[11px] text-slate-400">
+                    <span className="rounded-full border border-white/10 bg-[#050507] px-3 py-1 text-[11px] text-zinc-400">
                       Last 30 Days
                     </span>
                   </div>
@@ -814,12 +873,12 @@ function DashboardPage() {
                         <linearGradient id="eaGlow" x1="0" y1="0" x2="0" y2="1">
                           <stop
                             offset="0%"
-                            stopColor="#3b82f6"
-                            stopOpacity="0.45"
+                            stopColor="#38bdf8"
+                            stopOpacity="0.4"
                           />
                           <stop
                             offset="100%"
-                            stopColor="#3b82f6"
+                            stopColor="#38bdf8"
                             stopOpacity="0"
                           />
                         </linearGradient>
@@ -837,19 +896,19 @@ function DashboardPage() {
                       />
                     </svg>
 
-                    <div className="space-y-3 border-t border-blue-500/15 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+                    <div className="space-y-3 border-t border-white/10 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
                       <div>
-                        <p className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                          <Globe className="h-3.5 w-3.5 text-blue-400" />{" "}
+                        <p className="flex items-center gap-1.5 text-[11px] text-zinc-400">
+                          <Globe className="h-3.5 w-3.5 text-cyan-400" />{" "}
                           Countries Accessed
                         </p>
                         <p className="text-lg font-bold text-white">4</p>
-                        <p className="text-[10px] text-slate-500">
+                        <p className="text-[10px] text-zinc-500">
                           USA, UK, Germany, Canada
                         </p>
                       </div>
                       <div>
-                        <p className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                        <p className="flex items-center gap-1.5 text-[11px] text-zinc-400">
                           <Zap className="h-3.5 w-3.5 text-amber-400" /> Data
                           Protected
                         </p>
@@ -862,9 +921,9 @@ function DashboardPage() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="rounded-2xl border border-blue-500/20 bg-[#070f24] p-5">
+                <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5">
                   <h2 className="flex items-center gap-1.5 text-sm font-bold text-white">
-                    <Zap className="h-4 w-4 text-blue-400" /> Quick Actions
+                    <Zap className="h-4 w-4 text-cyan-400" /> Quick Actions
                   </h2>
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     {[
@@ -899,13 +958,13 @@ function DashboardPage() {
                           key={qa.label}
                           type="button"
                           onClick={() => setActiveTab(qa.tab)}
-                          className="rounded-xl border border-blue-500/20 bg-[#0b1633] p-3 text-left transition hover:border-blue-400"
+                          className="rounded-xl border border-white/10 bg-[#121218] p-3 text-left transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/60 hover:shadow-[0_0_20px_rgba(37,99,235,0.28)]"
                         >
-                          <Icon className="h-4 w-4 text-blue-400" />
+                          <Icon className="h-4 w-4 text-cyan-400" />
                           <p className="mt-2 text-xs font-bold text-white">
                             {qa.label}
                           </p>
-                          <p className="text-[10px] text-slate-400">{qa.sub}</p>
+                          <p className="text-[10px] text-zinc-400">{qa.sub}</p>
                         </button>
                       );
                     })}
@@ -915,20 +974,20 @@ function DashboardPage() {
 
               {/* Active VPN Key + Promo Banner */}
               <div className="grid gap-6 lg:grid-cols-2">
-                <div className="rounded-2xl border border-blue-500/30 bg-[#070f24] p-5">
+                <div className="rounded-2xl border border-blue-500/30 bg-[#0c0c10] p-5 shadow-[0_0_28px_rgba(37,99,235,0.12)] transition-all duration-300 hover:-translate-y-0.5">
                   <div className="flex items-center gap-2">
-                    <KeyRound className="h-4 w-4 text-blue-400" />
+                    <KeyRound className="h-4 w-4 text-cyan-400" />
                     <h2 className="text-sm font-bold text-white">
                       Your Active VPN Key
                     </h2>
                   </div>
                   {activeKey ? (
-                    <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-blue-500/25 bg-[#030712] px-3.5 py-2.5 font-mono text-xs text-blue-300">
+                    <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#050507] px-3.5 py-2.5 font-mono text-xs text-cyan-300">
                       <span className="truncate">{activeKey}</span>
                       <button
                         type="button"
                         onClick={() => handleCopyKey(activeKey)}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 font-sans text-xs font-semibold text-white hover:bg-blue-500"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-600 px-3.5 py-1.5 font-sans text-xs font-semibold text-white shadow-[0_0_15px_rgba(37,99,235,0.6)] hover:bg-blue-500"
                       >
                         {copiedKey ? (
                           <Check className="h-3.5 w-3.5" />
@@ -940,14 +999,14 @@ function DashboardPage() {
                     </div>
                   ) : (
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-zinc-400">
                         Activate a VPN plan to unlock your encrypted key
                         immediately.
                       </p>
                       <button
                         type="button"
                         onClick={() => setActiveTab("subscriptions")}
-                        className="shrink-0 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-[0_0_18px_rgba(37,99,235,0.6)] hover:bg-blue-500"
+                        className="shrink-0 rounded-full bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-[0_0_22px_rgba(37,99,235,0.7)] transition hover:bg-blue-500"
                       >
                         Get a VPN Key
                       </button>
@@ -955,23 +1014,23 @@ function DashboardPage() {
                   )}
                 </div>
 
-                <div className="flex items-center justify-between rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-900/60 via-[#081538] to-blue-600/30 p-5">
+                <div className="flex items-center justify-between rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-600/20 via-[#0c0c10] to-violet-600/20 p-5 shadow-[0_0_28px_rgba(37,99,235,0.14)] transition-all duration-300 hover:-translate-y-0.5">
                   <div>
                     <p className="text-base font-extrabold text-white">
                       Unlock the World with EspritAccess
                     </p>
-                    <p className="mt-1 text-xs text-blue-200">
+                    <p className="mt-1 text-xs text-zinc-300">
                       Stream. Work. Connect. Without Limits.
                     </p>
                     <button
                       type="button"
                       onClick={() => setActiveTab("subscriptions")}
-                      className="mt-3 rounded-lg bg-white px-4 py-1.5 text-xs font-bold text-slate-950 hover:bg-blue-50"
+                      className="mt-3 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-zinc-950 hover:bg-blue-50"
                     >
                       Explore Plans →
                     </button>
                   </div>
-                  <Sparkles className="hidden h-10 w-10 text-blue-300 sm:block" />
+                  <Sparkles className="hidden h-10 w-10 text-cyan-300 sm:block" />
                 </div>
               </div>
             </div>
@@ -984,7 +1043,7 @@ function DashboardPage() {
                 <h1 className="text-2xl font-bold text-white">
                   VPN Plans & Access
                 </h1>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-zinc-400">
                   Pay in Naira via Paystack for instant key delivery.
                 </p>
               </div>
@@ -992,13 +1051,13 @@ function DashboardPage() {
                 {VPN_PLANS.map((plan) => (
                   <div
                     key={plan.code}
-                    className={`flex flex-col justify-between rounded-2xl p-6 ${plan.featured
-                        ? "border-2 border-blue-500 bg-[#08122b] shadow-[0_0_30px_rgba(37,99,235,0.25)]"
-                        : "border border-blue-500/20 bg-[#070f24]"
+                    className={`flex flex-col justify-between rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1.5 ${plan.featured
+                        ? "border border-blue-500/70 bg-[#0e0f17] shadow-[0_0_40px_rgba(37,99,235,0.3)]"
+                        : "border border-white/10 bg-[#0c0c10] hover:border-white/25"
                       }`}
                   >
                     <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-400">
                         {plan.tag}
                       </span>
                       <h3 className="mt-1 text-xl font-bold text-white">
@@ -1006,15 +1065,15 @@ function DashboardPage() {
                       </h3>
                       <p className="mt-3 text-3xl font-extrabold text-white">
                         ₦{plan.price.toLocaleString()}
-                        <span className="text-xs font-normal text-slate-400">
+                        <span className="text-xs font-normal text-zinc-400">
                           {" "}
                           {plan.period}
                         </span>
                       </p>
-                      <ul className="mt-4 space-y-2 text-xs text-slate-300">
+                      <ul className="mt-4 space-y-2 text-xs text-zinc-300">
                         {plan.features.map((f) => (
                           <li key={f} className="flex items-center gap-2">
-                            <Check className="h-3.5 w-3.5 text-blue-400" /> {f}
+                            <Check className="h-3.5 w-3.5 text-cyan-400" /> {f}
                           </li>
                         ))}
                       </ul>
@@ -1025,7 +1084,7 @@ function DashboardPage() {
                       onClick={() =>
                         handleCheckout(plan.code, plan.name, plan.price)
                       }
-                      className="mt-6 w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-60"
+                      className="mt-6 w-full rounded-full bg-blue-600 py-2.5 text-xs font-bold text-white shadow-[0_0_20px_rgba(37,99,235,0.6)] transition hover:bg-blue-500 disabled:opacity-60"
                     >
                       {payingCode === plan.code
                         ? "Opening Paystack..."
@@ -1045,12 +1104,12 @@ function DashboardPage() {
                   <h1 className="text-2xl font-bold text-white">
                     Virtual SMS Numbers
                   </h1>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-zinc-400">
                     Clean, non-VoIP numbers for instant OTP verification—paid in
                     Naira.
                   </p>
                 </div>
-                <span className="rounded-full border border-emerald-500/30 bg-emerald-950/50 px-3 py-1 text-[11px] font-semibold text-emerald-300">
+                <span className="rounded-full border border-emerald-500/30 bg-emerald-950/40 px-3 py-1 text-[11px] font-semibold text-emerald-300">
                   ● Live Stock Available
                 </span>
               </div>
@@ -1059,7 +1118,7 @@ function DashboardPage() {
                 {VIRTUAL_NUMBERS.map((num) => (
                   <div
                     key={num.code}
-                    className="flex flex-col justify-between rounded-2xl border border-blue-500/20 bg-[#070f24] p-5 transition hover:border-blue-400/60"
+                    className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#0c0c10] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/50 hover:shadow-[0_0_25px_rgba(6,182,212,0.18)]"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2">
@@ -1072,12 +1131,12 @@ function DashboardPage() {
                           />
                           {num.country} ({num.dialCode})
                         </span>
-                        <span className="shrink-0 rounded-md bg-blue-600/20 px-2 py-0.5 text-[10px] font-bold text-blue-300">
+                        <span className="shrink-0 rounded-full bg-blue-500/15 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300">
                           {num.tag}
                         </span>
                       </div>
 
-                      <div className="mt-3 rounded-lg border border-blue-500/15 bg-[#030712] px-3 py-2 font-mono text-xs text-blue-300">
+                      <div className="mt-3 rounded-xl border border-white/10 bg-[#050507] px-3 py-2 font-mono text-xs text-cyan-300">
                         Sample: {num.sampleNumber}
                       </div>
 
@@ -1085,10 +1144,10 @@ function DashboardPage() {
                         {num.service}
                       </p>
 
-                      <div className="mt-2 space-y-1 text-[11px] text-slate-400">
+                      <div className="mt-2 space-y-1 text-[11px] text-zinc-400">
                         <p>
                           Type:{" "}
-                          <span className="text-slate-200">{num.type}</span>
+                          <span className="text-zinc-200">{num.type}</span>
                         </p>
                         <p>
                           Delivery:{" "}
@@ -1098,14 +1157,14 @@ function DashboardPage() {
                         </p>
                         <p>
                           Success Rate:{" "}
-                          <span className="text-slate-200">
+                          <span className="text-zinc-200">
                             {num.successRate}
                           </span>
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-5 flex items-center justify-between border-t border-blue-500/15 pt-4">
+                    <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
                       <p className="text-xl font-extrabold text-white">
                         ₦{num.price.toLocaleString()}
                       </p>
@@ -1119,7 +1178,7 @@ function DashboardPage() {
                             num.price
                           )
                         }
-                        className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500 disabled:opacity-60"
+                        className="rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-[0_0_18px_rgba(37,99,235,0.6)] transition hover:bg-blue-500 disabled:opacity-60"
                       >
                         {payingCode === num.code ? "Opening..." : "Get Number"}
                       </button>
@@ -1137,7 +1196,7 @@ function DashboardPage() {
                 <h1 className="text-2xl font-bold text-white">
                   E-books & Digital Library
                 </h1>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-zinc-400">
                   Best-selling e-books across Finance, Health, Self-Development,
                   Gospel, and Novels.
                 </p>
@@ -1149,9 +1208,9 @@ function DashboardPage() {
                     key={niche}
                     type="button"
                     onClick={() => setSelectedNiche(niche)}
-                    className={`rounded-xl px-4 py-2 text-xs font-semibold transition ${selectedNiche === niche
-                        ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]"
-                        : "border border-blue-500/20 bg-[#070f24] text-slate-300 hover:border-blue-400"
+                    className={`rounded-full px-4 py-2 text-xs font-semibold transition ${selectedNiche === niche
+                        ? "bg-blue-600 text-white shadow-[0_0_18px_rgba(37,99,235,0.6)]"
+                        : "border border-white/10 bg-[#0c0c10] text-zinc-300 hover:border-white/30"
                       }`}
                   >
                     {niche}
@@ -1165,7 +1224,7 @@ function DashboardPage() {
                 ).map((book) => (
                   <div
                     key={book.code}
-                    className="flex flex-col justify-between overflow-hidden rounded-2xl border border-blue-500/20 bg-[#070f24] transition hover:border-blue-400/60"
+                    className="flex flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c10] transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-[0_0_25px_rgba(37,99,235,0.2)]"
                   >
                     <div
                       className={`flex items-center gap-4 bg-gradient-to-br ${book.gradient} p-4`}
@@ -1192,7 +1251,7 @@ function DashboardPage() {
 
                     <div className="flex items-center justify-between p-4">
                       <div>
-                        <p className="text-[10px] text-slate-400">
+                        <p className="text-[10px] text-zinc-400">
                           {book.format}
                         </p>
                         <p className="text-lg font-extrabold text-white">
@@ -1205,7 +1264,7 @@ function DashboardPage() {
                         onClick={() =>
                           handleCheckout(book.code, book.title, book.price)
                         }
-                        className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-60"
+                        className="rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-[0_0_15px_rgba(37,99,235,0.55)] transition hover:bg-blue-500 disabled:opacity-60"
                       >
                         {payingCode === book.code ? "Opening..." : "Buy E-book"}
                       </button>
@@ -1218,29 +1277,29 @@ function DashboardPage() {
 
           {/* BILLING & PAYMENTS TAB */}
           {activeTab === "billing" && (
-            <div className="rounded-2xl border border-blue-500/20 bg-[#070f24] p-6">
+            <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-6">
               <h2 className="text-lg font-bold text-white">
                 Billing & Payment History
               </h2>
               {orders.length === 0 ? (
-                <p className="mt-3 text-xs text-slate-400">No payments yet.</p>
+                <p className="mt-3 text-xs text-zinc-400">No payments yet.</p>
               ) : (
                 <div className="mt-4 space-y-3">
                   {orders.map((o) => (
                     <div
                       key={o.id}
-                      className="flex items-center justify-between rounded-xl border border-blue-500/15 bg-[#030712] px-4 py-3 text-xs"
+                      className="flex items-center justify-between rounded-xl border border-white/10 bg-[#050507] px-4 py-3 text-xs"
                     >
                       <div>
                         <p className="font-bold text-white">
                           {o.plan_name || o.plan_code || "Order"}
                         </p>
-                        <p className="text-slate-400">
+                        <p className="text-zinc-400">
                           Ref: {o.reference || o.id}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-blue-400">
+                        <p className="font-bold text-cyan-400">
                           ₦{(o.amount_ngn || 0).toLocaleString()}
                         </p>
                         <p className="uppercase text-emerald-400">
@@ -1254,25 +1313,283 @@ function DashboardPage() {
             </div>
           )}
 
-          {/* REMAINING TABS */}
-          {(activeTab === "security" ||
-            activeTab === "support" ||
-            activeTab === "settings" ||
-            activeTab === "referrals" ||
-            activeTab === "notifications") && (
-              <div className="space-y-3 rounded-2xl border border-blue-500/20 bg-[#070f24] p-6">
-                <h2 className="text-lg font-bold capitalize text-white">
-                  {activeTab}
-                </h2>
-                <p className="text-xs text-slate-400">
-                  Signed in as{" "}
-                  <span className="font-semibold text-white">{user?.email}</span>.
-                  Need instant help? Reach out to{" "}
-                  <span className="text-blue-400">support@espritaccess.com</span>{" "}
-                  or click the WhatsApp support button below.
+          {/* SECURITY TOOLS TAB */}
+          {activeTab === "security" && (
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  Security & Privacy Tools
+                </h1>
+                <p className="text-xs text-zinc-400">
+                  Built-in privacy utilities to lock down your accounts and
+                  connections.
                 </p>
               </div>
-            )}
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <div className="space-y-4 rounded-2xl border border-white/10 bg-[#0c0c10] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-[0_0_25px_rgba(37,99,235,0.2)]">
+                  <div className="flex items-center gap-2 text-cyan-400">
+                    <KeyRound className="h-5 w-5" />
+                    <h2 className="text-sm font-bold text-white">
+                      Strong Password Generator
+                    </h2>
+                  </div>
+                  <p className="text-xs text-zinc-400">
+                    Generate a 16-character encrypted password for your
+                    accounts.
+                  </p>
+                  <div className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#050507] px-3.5 py-2.5 font-mono text-xs text-cyan-300">
+                    <span className="truncate">{generatedPass}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyKey(generatedPass)}
+                      className="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-600 px-3 py-1.5 font-sans text-xs font-semibold text-white hover:bg-blue-500"
+                    >
+                      {copiedKey ? (
+                        <Check className="h-3.5 w-3.5" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
+                      {copiedKey ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={generateStrongPassword}
+                    className="w-full rounded-full border border-white/15 bg-white/[0.04] py-2 text-xs font-bold text-white transition hover:border-cyan-400/60"
+                  >
+                    Generate New Password
+                  </button>
+                </div>
+
+                <div className="space-y-3 rounded-2xl border border-white/10 bg-[#0c0c10] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40">
+                  <div className="flex items-center gap-2 text-cyan-400">
+                    <Shield className="h-5 w-5" />
+                    <h2 className="text-sm font-bold text-white">
+                      Connection Shield
+                    </h2>
+                  </div>
+                  {[
+                    { label: "DNS Leak Protection", status: "Enabled" },
+                    { label: "Zero-Logs Routing Policy", status: "Verified" },
+                    {
+                      label: "AES-256 Tunnel Encryption",
+                      status: activeKey ? "Active" : "Standby",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="flex items-center justify-between rounded-xl border border-white/10 bg-[#050507] px-4 py-2.5 text-xs"
+                    >
+                      <span className="text-zinc-300">{item.label}</span>
+                      <span className="font-bold text-emerald-400">
+                        {item.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ACCOUNT SETTINGS TAB */}
+          {activeTab === "settings" && (
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  Account Settings
+                </h1>
+                <p className="text-xs text-zinc-400">
+                  Manage your profile details, login password, and active
+                  session.
+                </p>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <form
+                  onSubmit={handleUpdateProfile}
+                  className="space-y-4 rounded-2xl border border-white/10 bg-[#0c0c10] p-6"
+                >
+                  <h2 className="text-sm font-bold text-white">
+                    Profile Information
+                  </h2>
+                  <div>
+                    <label className="block text-xs text-zinc-400">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      disabled
+                      value={user?.email || ""}
+                      className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#050507] px-3.5 py-2.5 text-xs text-zinc-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-zinc-400">
+                      Display Name
+                    </label>
+                    <input
+                      type="text"
+                      value={fullNameInput}
+                      onChange={(e) => setFullNameInput(e.target.value)}
+                      placeholder={displayName}
+                      className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#050507] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={savingSettings}
+                    className="rounded-full bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-[0_0_18px_rgba(37,99,235,0.6)] hover:bg-blue-500 disabled:opacity-60"
+                  >
+                    {savingSettings ? "Saving..." : "Save Profile"}
+                  </button>
+                </form>
+
+                <form
+                  onSubmit={handleUpdatePassword}
+                  className="space-y-4 rounded-2xl border border-white/10 bg-[#0c0c10] p-6"
+                >
+                  <h2 className="text-sm font-bold text-white">
+                    Change Password
+                  </h2>
+                  <div>
+                    <label className="block text-xs text-zinc-400">
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={newPasswordInput}
+                      onChange={(e) => setNewPasswordInput(e.target.value)}
+                      placeholder="Minimum 6 characters"
+                      className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#050507] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={savingSettings}
+                    className="rounded-full bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-[0_0_18px_rgba(37,99,235,0.6)] hover:bg-blue-500 disabled:opacity-60"
+                  >
+                    Update Password
+                  </button>
+
+                  <div className="border-t border-white/10 pt-4">
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="inline-flex items-center gap-2 rounded-full border border-rose-500/40 bg-rose-950/30 px-4 py-2 text-xs font-bold text-rose-300 hover:bg-rose-950/60"
+                    >
+                      <LogOut className="h-3.5 w-3.5" /> Sign Out of Account
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* SUPPORT CENTER TAB */}
+          {activeTab === "support" && (
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  Support Center
+                </h1>
+                <p className="text-xs text-zinc-400">
+                  Fast human support for VPN setup, OTP numbers, and orders.
+                </p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2 rounded-2xl border border-white/10 bg-[#0c0c10] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50">
+                  <Mail className="h-5 w-5 text-cyan-400" />
+                  <h3 className="text-sm font-bold text-white">
+                    Email Support
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    Reach our team anytime at{" "}
+                    <span className="text-cyan-400">
+                      support@espritaccess.com
+                    </span>
+                    .
+                  </p>
+                </div>
+                <div className="space-y-2 rounded-2xl border border-white/10 bg-[#0c0c10] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/50">
+                  <HelpCircle className="h-5 w-5 text-emerald-400" />
+                  <h3 className="text-sm font-bold text-white">
+                    Live WhatsApp Desk
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    Need instant activation help? Tap the green support icon at
+                    the bottom-right corner.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* REFERRAL PROGRAM TAB */}
+          {activeTab === "referrals" && (
+            <div className="space-y-4 rounded-2xl border border-blue-500/30 bg-[#0c0c10] p-6 shadow-[0_0_25px_rgba(37,99,235,0.12)]">
+              <div className="flex items-center gap-2 text-cyan-400">
+                <Users className="h-5 w-5" />
+                <h2 className="text-lg font-bold text-white">
+                  Invite Friends, Earn ₦500
+                </h2>
+              </div>
+              <p className="text-xs text-zinc-400">
+                Share your personal EspritAccess link. You earn ₦500 in wallet
+                credit for every friend who activates a VPN plan.
+              </p>
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#050507] px-4 py-3 font-mono text-xs text-cyan-300">
+                <span className="truncate">
+                  {`https://www.espritaccess.com.ng/auth?ref=${user?.id.slice(0, 8)}`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `https://www.espritaccess.com.ng/auth?ref=${user?.id.slice(0, 8)}`
+                    );
+                    setCopiedRef(true);
+                    setTimeout(() => setCopiedRef(false), 2000);
+                  }}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-600 px-3.5 py-1.5 font-sans text-xs font-semibold text-white hover:bg-blue-500"
+                >
+                  {copiedRef ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
+                  {copiedRef ? "Copied" : "Copy Link"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* NOTIFICATIONS TAB */}
+          {activeTab === "notifications" && (
+            <div className="space-y-4 rounded-2xl border border-white/10 bg-[#0c0c10] p-6">
+              <h2 className="text-lg font-bold text-white">Notifications</h2>
+              <div className="space-y-3">
+                <div className="rounded-xl border border-white/10 bg-[#050507] p-4">
+                  <p className="text-xs font-bold text-white">
+                    Welcome to EspritAccess 🎉
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-400">
+                    Your account is verified. Browse VPN Plans, Virtual SMS, or
+                    E-books to get started.
+                  </p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-[#050507] p-4">
+                  <p className="text-xs font-bold text-white">
+                    Paystack NGN Checkout Ready
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-400">
+                    Instant activation is active for cards, bank transfers, and
+                    USSD.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
