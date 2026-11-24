@@ -1,3 +1,4 @@
+
 import logoMark from "@/assets/logo-mark.png";
 
 export function BrandLogo({
@@ -16,11 +17,17 @@ export function BrandLogo({
         alt="EspritAccess logo"
         width={size}
         height={size}
-        className="rounded-lg"
+        loading="eager"
+        decoding="async"
+        fetchPriority="high"
+        className="shrink-0 rounded-lg object-contain"
         style={{ width: size, height: size }}
       />
+
       {withWordmark && (
-        <span className={`font-display text-lg font-extrabold tracking-tight text-foreground ${wordmarkClass}`}>
+        <span
+          className={`font-display text-lg font-extrabold tracking-tight text-foreground ${wordmarkClass}`}
+        >
           Esprit<span className="text-primary">Access</span>
         </span>
       )}

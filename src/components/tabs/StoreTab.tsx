@@ -1,27 +1,43 @@
+
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, KeyRound, Copy, Phone, BookOpen } from "lucide-react";
+import {
+  Check,
+  KeyRound,
+  Copy,
+  Phone,
+  BookOpen,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { finalizePaystackOrder, listMyKeys } from "@/lib/paystack.functions";
-import { loadPaystack, generateReference, PAYSTACK_PUBLIC_KEY } from "@/lib/paystack";
+import {
+  finalizePaystackOrder,
+  listMyKeys,
+} from "@/lib/paystack.functions";
+import {
+  loadPaystack,
+  generateReference,
+  PAYSTACK_PUBLIC_KEY,
+} from "@/lib/paystack";
 
 const PLANS = [
   {
     id: "monthly" as const,
     name: "Monthly Plan",
     price: 4000,
-    tag: "Best to try",
+    tag: "Flexible Billing",
     period: "/ month",
+    description: "Great for customers who prefer monthly payments.",
   },
   {
     id: "yearly" as const,
     name: "Yearly Plan",
-    price: 14000,
-    tag: "Save 70%",
+    price: 19999,
+    tag: "Save 58%",
     period: "/ year",
+    description: "Enjoy a lower effective monthly cost with annual billing.",
     highlight: true,
   },
 ];
@@ -44,6 +60,7 @@ type MyKey = {
 export function StoreTab({ user }: { user: User }) {
   const finalize = useServerFn(finalizePaystackOrder);
   const listKeys = useServerFn(listMyKeys);
+
   const [busy, setBusy] = useState<"monthly" | "yearly" | null>(null);
   const [keys, setKeys] = useState<MyKey[]>([]);
 
@@ -52,32 +69,53 @@ export function StoreTab({ user }: { user: User }) {
       const rows = await listKeys();
       setKeys(rows as MyKey[]);
     } catch {
-      /* silent */
+      /* Keep existing dashboard state if loading fails */
     }
   }
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    void refresh();
+  }, []);
 
-  async function purchase(plan: "monthly" | "yearly", price: number) {
-    if (!user.email) return toast.error("Email required to purchase");
+  async function purchase(
+    plan: "monthly" | "yearly",
+    price: number,
+  ) {
+    if (!user.email) {
+      return toast.error("Email required to purchase");
+    }
+
     setBusy(plan);
+
     try {
       const Paystack = await loadPaystack();
       const reference = generateReference();
+
       const handler = Paystack.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: user.email,
-        amount: price * 100, // kobo
+        amount: price * 100,
         currency: "NGN",
         ref: reference,
-        metadata: { plan, user_id: user.id },
+        metadata: {
+          plan,
+          user_id: user.id,
+        },
+
         callback: (response) => {
           (async () => {
             try {
-              const res = await finalize({ data: { reference: response.reference, plan_type: plan } });
+              const res = await finalize({
+                data: {
+                  reference: response.reference,
+                  plan_type: plan,
+                },
+              });
+
               toast.success("Payment verified — your key is ready!");
+
               await refresh();
-              // Also reveal immediately
+
               setKeys((prev) => [
                 {
                   id: res.reference,
@@ -86,139 +124,268 @@ export function StoreTab({ user }: { user: User }) {
                   created_at: new Date().toISOString(),
                   api_key_or_config: res.api_key_or_config,
                 },
-                ...prev.filter((k) => k.reference_id !== res.reference),
+                ...prev.filter(
+                  (key) => key.reference_id !== res.reference,
+                ),
               ]);
             } catch (err) {
-              toast.error(err instanceof Error ? err.message : "Verification failed");
+              toast.error(
+                err instanceof Error
+                  ? err.message
+                  : "Payment verification failed",
+              );
             } finally {
               setBusy(null);
             }
           })();
         },
-        onClose: () => setBusy(null),
+
+        onClose: () => {
+          setBusy(null);
+        },
       });
+
       handler.openIframe();
     } catch (err) {
       setBusy(null);
-      toast.error(err instanceof Error ? err.message : "Unable to start payment");
+
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Unable to start payment",
+      );
     }
   }
 
   return (
     <div className="space-y-10">
-      {/* Shelf 1: VPN Services */}
+      {/* VPN Services */}
       <section>
-        <div className="mb-4 flex items-end justify-between">
+        <div className="mb-5 flex items-end justify-between">
           <div>
-            <h2 className="font-display text-2xl font-bold">VPN Services</h2>
-            <p className="text-sm text-foreground/60">Active · Purchase and get instant access.</p>
+            <h2 className="font-display text-2xl font-bold">
+              VPN Services
+            </h2>
+
+            <p className="text-sm text-foreground/60">
+              Secure connectivity for your digital life.
+            </p>
           </div>
-          <Badge className="bg-primary text-primary-foreground">Live</Badge>
+
+          <Badge className="bg-primary text-primary-foreground">
+            Live
+          </Badge>
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
-          {PLANS.map((p) => (
+          {PLANS.map((plan) => (
             <div
-              key={p.id}
-              className={`relative overflow-hidden rounded-2xl border p-6 shadow-[var(--shadow-panel)] ${
-                p.highlight ? "border-primary/60" : "border-border"
-              } bg-card`}
+              key={plan.id}
+              className={`relative flex flex-col overflow-hidden rounded-2xl border p-6 shadow-[var(--shadow-panel)] ${plan.highlight
+                  ? "border-primary/60 bg-card"
+                  : "border-border bg-card"
+                }`}
             >
-              {p.highlight && (
-                <div className="absolute -right-14 top-6 rotate-45 bg-primary px-14 py-1 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow">
-                  Best Value
+              {plan.highlight && (
+                <div className="absolute right-4 top-4">
+                  <Badge className="bg-primary text-primary-foreground">
+                    Best Value
+                  </Badge>
                 </div>
               )}
-              <div className="text-xs font-semibold uppercase tracking-wider text-primary">{p.tag}</div>
-              <h3 className="mt-1 font-display text-2xl font-bold">{p.name}</h3>
-              <div className="mt-3 flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold">₦{p.price.toLocaleString()}</span>
-                <span className="text-sm text-foreground/60">{p.period}</span>
+
+              <div className="text-xs font-semibold uppercase tracking-wider text-primary">
+                {plan.tag}
               </div>
-              <ul className="mt-5 space-y-3 text-sm">
-                {FEATURES.map((f) => (
-                  <li key={f} className="flex items-start gap-2">
+
+              <h3 className="mt-2 font-display text-2xl font-bold">
+                {plan.name}
+              </h3>
+
+              <p className="mt-2 text-sm text-foreground/60">
+                {plan.description}
+              </p>
+
+              <div className="mt-5 flex items-baseline gap-1">
+                <span className="text-4xl font-extrabold tracking-tight">
+                  ₦{plan.price.toLocaleString("en-NG")}
+                </span>
+
+                <span className="text-sm text-foreground/60">
+                  {plan.period}
+                </span>
+              </div>
+
+              {plan.id === "yearly" && (
+                <p className="mt-2 text-sm font-medium text-primary">
+                  Equivalent to approximately ₦1,667/month
+                </p>
+              )}
+
+              <div className="my-5 h-px bg-border" />
+
+              <ul className="flex-1 space-y-3 text-sm">
+                {FEATURES.map((feature) => (
+                  <li
+                    key={feature}
+                    className="flex items-start gap-2"
+                  >
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
-                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                      <Check
+                        className="h-3.5 w-3.5"
+                        strokeWidth={3}
+                      />
                     </span>
-                    <span className="text-foreground/80">{f}</span>
+
+                    <span className="text-foreground/80">
+                      {feature}
+                    </span>
                   </li>
                 ))}
               </ul>
+
               <Button
-                onClick={() => purchase(p.id, p.price)}
+                onClick={() => purchase(plan.id, plan.price)}
                 disabled={busy !== null}
-                className="mt-6 w-full font-semibold"
-                style={{ background: "var(--gradient-brand)" }}
+                className="mt-7 w-full font-semibold"
+                style={{
+                  background: "var(--gradient-brand)",
+                }}
               >
-                {busy === p.id ? "Processing…" : "Purchase Now"}
+                {busy === plan.id
+                  ? "Processing..."
+                  : `Purchase ${plan.name}`}
               </Button>
+
+              <p className="mt-3 text-center text-xs text-foreground/50">
+                Secure payment powered by Paystack
+              </p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Your keys */}
+      {/* Active VPN Keys */}
       {keys.length > 0 && (
         <section>
-          <h2 className="mb-3 font-display text-xl font-bold">Your Active Keys</h2>
+          <h2 className="mb-3 font-display text-xl font-bold">
+            Your Active Keys
+          </h2>
+
           <div className="space-y-3">
-            {keys.map((k) => (
-              <div key={k.id} className="rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-panel)]">
+            {keys.map((key) => (
+              <div
+                key={key.id}
+                className="rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-panel)]"
+              >
                 <div className="mb-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <KeyRound className="h-4 w-4 text-primary" />
-                    <span className="font-medium capitalize">{k.plan_type} Plan</span>
-                    <Badge variant="secondary" className="text-[10px] uppercase">
+
+                    <span className="font-medium capitalize">
+                      {key.plan_type} Plan
+                    </span>
+
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] uppercase"
+                    >
                       Paid
                     </Badge>
                   </div>
+
                   <button
                     className="flex items-center gap-1 text-xs text-primary hover:opacity-80"
-                    onClick={() => {
-                      if (k.api_key_or_config) {
-                        navigator.clipboard.writeText(k.api_key_or_config);
+                    onClick={async () => {
+                      if (!key.api_key_or_config) {
+                        toast.error("VPN configuration is not available yet");
+                        return;
+                      }
+
+                      try {
+                        await navigator.clipboard.writeText(
+                          key.api_key_or_config,
+                        );
+
                         toast.success("Copied to clipboard");
+                      } catch {
+                        toast.error("Unable to copy configuration");
                       }
                     }}
                   >
-                    <Copy className="h-3 w-3" /> Copy
+                    <Copy className="h-3 w-3" />
+                    Copy
                   </button>
                 </div>
+
                 <code className="block break-all rounded-md bg-secondary p-3 text-xs text-foreground/80">
-                  {k.api_key_or_config ?? "Pending allocation…"}
+                  {key.api_key_or_config ?? "Pending allocation..."}
                 </code>
-                <p className="mt-1 text-[11px] text-foreground/40">Ref: {k.reference_id}</p>
+
+                <p className="mt-1 text-[11px] text-foreground/40">
+                  Ref: {key.reference_id}
+                </p>
               </div>
             ))}
           </div>
         </section>
       )}
 
-      {/* Shelf 2: One-Time Numbers */}
-      <ComingSoonShelf icon={Phone} title="One-Time Numbers" body="Disposable phone numbers for verifications, worldwide." />
+      {/* One-Time Numbers */}
+      <ComingSoonShelf
+        icon={Phone}
+        title="One-Time Numbers"
+        body="Disposable phone numbers for verifications, worldwide."
+      />
 
-      {/* Shelf 3: E-Books */}
-      <ComingSoonShelf icon={BookOpen} title="E-Books" body="Curated privacy & digital library." />
+      {/* E-Books */}
+      <ComingSoonShelf
+        icon={BookOpen}
+        title="E-Books"
+        body="Curated privacy & digital library."
+      />
     </div>
   );
 }
 
-function ComingSoonShelf({ icon: Icon, title, body }: { icon: typeof Phone; title: string; body: string }) {
+function ComingSoonShelf({
+  icon: Icon,
+  title,
+  body,
+}: {
+  icon: typeof Phone;
+  title: string;
+  body: string;
+}) {
   return (
     <section>
       <div className="mb-4 flex items-end justify-between">
         <div>
-          <h2 className="font-display text-2xl font-bold">{title}</h2>
-          <p className="text-sm text-foreground/60">{body}</p>
+          <h2 className="font-display text-2xl font-bold">
+            {title}
+          </h2>
+
+          <p className="text-sm text-foreground/60">
+            {body}
+          </p>
         </div>
-        <Badge variant="outline" className="border-primary/40 text-primary">Coming Soon</Badge>
+
+        <Badge
+          variant="outline"
+          className="border-primary/40 text-primary"
+        >
+          Coming Soon
+        </Badge>
       </div>
+
       <div className="rounded-2xl border border-dashed border-border bg-panel/50 p-10 text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-primary">
           <Icon className="h-7 w-7" />
         </div>
-        <p className="mt-3 text-sm text-foreground/60">This shelf is being stocked. Check back soon.</p>
+
+        <p className="mt-3 text-sm text-foreground/60">
+          This shelf is being stocked. Check back soon.
+        </p>
       </div>
     </section>
   );

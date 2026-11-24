@@ -27,54 +27,61 @@
   --radius-sm: calc(var(--radius) - 4px);
 }
 
-/* Light Mode — Clean Banking Fintech */
+/* Light Mode — Clean Crisp Banking Surface */
 :root {
   --background: #f8fafc;
-  --foreground: #0f172a;
+  --foreground: #060a11;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #060a11;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #10b981;
-  --accent-foreground: #ffffff;
+  --popover-foreground: #060a11;
+  --primary: #00c878;
+  --primary-foreground: #040711;
+  --secondary: #eef2f6;
+  --secondary-foreground: #060a11;
+  --muted: #eef2f6;
+  --muted-foreground: #526071;
+  --accent: #00e68a;
+  --accent-foreground: #040711;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #2563eb;
-  --radius: 0.75rem;
+  --border: rgba(6, 10, 17, 0.08);
+  --input: rgba(6, 10, 17, 0.12);
+  --ring: #00c878;
+  --radius: 0.875rem;
 }
 
-/* Dark Mode — Refined Midnight Fintech */
+/* Dark Mode — Deep Midnight/Obsidian Navy + Electric Emerald */
 .dark {
-  --background: #0b1120;
+  --background: #040812;
   --foreground: #f8fafc;
-  --card: #0f172a;
+  --card: #081020;
   --card-foreground: #f8fafc;
-  --popover: #0f172a;
+  --popover: #081020;
   --popover-foreground: #f8fafc;
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
-  --secondary: #1e293b;
+  --primary: #00f59b;
+  --primary-foreground: #040812;
+  --secondary: #0c172c;
   --secondary-foreground: #f8fafc;
-  --muted: #1e293b;
+  --muted: #0c172c;
   --muted-foreground: #94a3b8;
-  --accent: #10b981;
-  --accent-foreground: #ffffff;
+  --accent: #f59e0b;
+  --accent-foreground: #040812;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #1e293b;
-  --input: #1e293b;
-  --ring: #2563eb;
+  --border: rgba(255, 255, 255, 0.07);
+  --input: rgba(255, 255, 255, 0.09);
+  --ring: #00f59b;
 }
 
-* {
+html {
+  scroll-behavior: smooth;
+  background-color: #040812;
+}
+
+*,
+*::before,
+*::after {
   border-color: var(--border);
 }
 
@@ -84,15 +91,22 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.dark body {
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(0, 245, 155, 0.08), transparent 36%),
+    radial-gradient(circle at 88% 24%, rgba(245, 158, 11, 0.05), transparent 34%),
+    radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.06), transparent 42%);
+}
+
 @keyframes pulse-emerald {
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    box-shadow: 0 0 0 0 rgba(0, 245, 155, 0.65);
   }
 
   70% {
-    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 8px rgba(0, 245, 155, 0);
   }
 }
 
@@ -100,11 +114,11 @@ body {
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.65);
   }
 
   70% {
-    box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
   }
 }
 
@@ -125,7 +139,7 @@ body {
   height: 0.625rem;
   width: 0.625rem;
   border-radius: 9999px;
-  background-color: #10b981;
+  background-color: #00f59b;
   animation: pulse-emerald 2.2s infinite;
 }
 
@@ -139,23 +153,64 @@ body {
 }
 
 .fintech-card {
-  background-color: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  background: linear-gradient(160deg, rgba(11, 21, 40, 0.86) 0%, rgba(6, 11, 23, 0.94) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.875rem;
+  box-shadow:
+    0 18px 44px -18px rgba(0, 0, 0, 0.82),
+    0 0 24px -8px rgba(0, 245, 155, 0.12),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.07);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.28s ease,
+    box-shadow 0.28s ease;
 }
 
 .fintech-card:hover {
   transform: translateY(-3px);
-  border-color: rgba(37, 99, 235, 0.4);
-  box-shadow: 0 12px 30px -10px rgba(37, 99, 235, 0.18);
+  border-color: rgba(0, 245, 155, 0.34);
+  box-shadow:
+    0 24px 52px -16px rgba(0, 0, 0, 0.9),
+    0 0 30px -4px rgba(0, 245, 155, 0.22),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+}
+
+:root:not(.dark) .fintech-card {
+  background: #ffffff;
+  backdrop-filter: none;
+  border: 1px solid rgba(6, 10, 17, 0.08);
+  box-shadow: 0 14px 34px -18px rgba(6, 10, 17, 0.14);
+}
+
+:root:not(.dark) .fintech-card:hover {
+  border-color: rgba(0, 200, 120, 0.35);
+  box-shadow: 0 18px 40px -16px rgba(0, 200, 120, 0.16);
+}
+
+.floating-page {
+  background-color: rgba(8, 16, 32, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 24px 70px -24px rgba(0, 0, 0, 0.88),
+    0 0 28px -10px rgba(0, 245, 155, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.floating-nav {
+  background-color: rgba(6, 10, 17, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 36px -12px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .hero-glow {
   background: radial-gradient(circle at top right,
-      rgba(16, 185, 129, 0.14),
-      rgba(37, 99, 235, 0.1) 40%,
-      transparent 72%);
+      rgba(0, 245, 155, 0.14),
+      rgba(245, 158, 11, 0.07) 44%,
+      transparent 74%);
 }
 
 .animate-float-slow {
