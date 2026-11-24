@@ -1,9 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { PAYSTACK_PUBLIC_KEY, generateReference } from "@/lib/paystack";
 import { finalizePaystackOrder } from "@/lib/paystack.functions";
+import {
+  PRICING_PLANS,
+  SUPPORT_EMAIL,
+  type ConnectionStatus,
+  generateClientPassword,
+  getConnectionIndicator,
+} from "../espritTrust";
 import {
   Home,
   Shield,
@@ -66,6 +73,23 @@ interface OrderRecord {
   created_at?: string;
 }
 
+interface PaystackInlineClient {
+  setup: (options: {
+    key: string;
+    email: string;
+    amount: number;
+    currency: string;
+    ref: string;
+    callback: (response: { reference: string }) => void;
+    onClose: () => void;
+  }) => { openIframe: () => void };
+}
+
+function getPaystackInline(): PaystackInlineClient | undefined {
+  return (window as unknown as { PaystackPop?: PaystackInlineClient })
+    .PaystackPop;
+}
+
 const COMMUNITY_SHOWCASE = [
   {
     title: "Remote Office & Teams",
@@ -76,8 +100,8 @@ const COMMUNITY_SHOWCASE = [
   },
   {
     title: "Borderless Digital Work",
-    subtitle: "Access global tools, AI platforms, and client portals without blocks.",
-    badge: "99.9% Uptime",
+    subtitle: "Access global tools, AI platforms, and client portals reliably.",
+    badge: "Multi-Region Access",
     image:
       "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=700&q=75",
   },
@@ -90,46 +114,6 @@ const COMMUNITY_SHOWCASE = [
   },
 ];
 
-const VPN_PLANS = [
-  {
-    code: "standard",
-    name: "Standard Plan",
-    tag: "STARTER",
-    price: 4000,
-    period: "/ month",
-    features: [
-      "1 High-Speed VPN Key",
-      "Instant Paystack Activation",
-      "Zero-Logs Tunnel",
-    ],
-  },
-  {
-    code: "plus",
-    name: "Plus Plan",
-    tag: "MOST POPULAR",
-    price: 8500,
-    period: "/ month",
-    featured: true,
-    features: [
-      "Up to 3 Devices",
-      "Priority Global Servers",
-      "Virtual SMS Access",
-    ],
-  },
-  {
-    code: "pro",
-    name: "Pro Plan",
-    tag: "ALL ACCESS",
-    price: 14000,
-    period: "/ year",
-    features: [
-      "Unlimited Bandwidth",
-      "Marketplace Discounts",
-      "24/7 Priority Support",
-    ],
-  },
-];
-
 const VIRTUAL_NUMBERS = [
   {
     code: "sms-us-wa",
@@ -139,10 +123,10 @@ const VIRTUAL_NUMBERS = [
     sampleNumber: "+1 (415) 890-4421",
     service: "WhatsApp / Business",
     type: "One-Time OTP",
-    delivery: "Instant (10–30s)",
-    successRate: "99.2%",
+    delivery: "Fast SMS Delivery",
+    successRate: "Standard Carrier Route",
     price: 2500,
-    tag: "Most Popular",
+    tag: "Popular",
   },
   {
     code: "sms-uk-tg",
@@ -152,10 +136,10 @@ const VIRTUAL_NUMBERS = [
     sampleNumber: "+44 7700 900412",
     service: "Telegram & Signal",
     type: "One-Time OTP",
-    delivery: "Instant (10–30s)",
-    successRate: "98.8%",
+    delivery: "Fast SMS Delivery",
+    successRate: "UK Carrier Route",
     price: 3000,
-    tag: "High Trust",
+    tag: "UK Line",
   },
   {
     code: "sms-us-ai",
@@ -165,10 +149,10 @@ const VIRTUAL_NUMBERS = [
     sampleNumber: "+1 (646) 512-8830",
     service: "OpenAI / ChatGPT / Claude",
     type: "One-Time OTP",
-    delivery: "Instant",
-    successRate: "99.5%",
+    delivery: "Fast SMS Delivery",
+    successRate: "US Carrier Route",
     price: 2200,
-    tag: "AI Ready",
+    tag: "US Line",
   },
   {
     code: "sms-ca-google",
@@ -178,10 +162,10 @@ const VIRTUAL_NUMBERS = [
     sampleNumber: "+1 (416) 555-0194",
     service: "Google / Gmail / YouTube",
     type: "One-Time OTP",
-    delivery: "Instant",
-    successRate: "98.4%",
+    delivery: "Fast SMS Delivery",
+    successRate: "CA Carrier Route",
     price: 2800,
-    tag: "Clean IP",
+    tag: "CA Line",
   },
   {
     code: "sms-uk-rent",
@@ -192,9 +176,9 @@ const VIRTUAL_NUMBERS = [
     service: "All Apps (30-Day Rental)",
     type: "Private Dedicated Line",
     delivery: "Active for 30 Days",
-    successRate: "99.9%",
+    successRate: "30-Day Rental",
     price: 9500,
-    tag: "Reusable",
+    tag: "30-Day",
   },
   {
     code: "sms-nl-fintech",
@@ -204,8 +188,8 @@ const VIRTUAL_NUMBERS = [
     sampleNumber: "+31 6 2489 1104",
     service: "PayPal / Wise / Stripe OTP",
     type: "One-Time OTP",
-    delivery: "Instant",
-    successRate: "97.9%",
+    delivery: "Fast SMS Delivery",
+    successRate: "EU Carrier Route",
     price: 3500,
     tag: "EU Line",
   },
@@ -240,7 +224,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 2500,
       cover: "https://covers.openlibrary.org/b/isbn/9780857197689-M.jpg",
-      gradient: "from-emerald-600/90 to-teal-950",
+      gradient: "from-emerald-700/90 to-slate-950",
     },
     {
       code: "book-fin-2",
@@ -251,7 +235,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.8",
       price: 2000,
       cover: "https://covers.openlibrary.org/b/isbn/9781612680194-M.jpg",
-      gradient: "from-violet-700/90 to-indigo-950",
+      gradient: "from-teal-800/90 to-slate-950",
     },
     {
       code: "book-fin-3",
@@ -262,7 +246,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 1800,
       cover: "https://covers.openlibrary.org/b/isbn/9780451205360-M.jpg",
-      gradient: "from-amber-600/90 to-stone-950",
+      gradient: "from-amber-700/90 to-slate-950",
     },
     {
       code: "book-hlt-1",
@@ -273,7 +257,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.8",
       price: 2500,
       cover: "https://covers.openlibrary.org/b/isbn/9781501144318-M.jpg",
-      gradient: "from-cyan-600/90 to-slate-950",
+      gradient: "from-cyan-800/90 to-slate-950",
     },
     {
       code: "book-hlt-2",
@@ -284,7 +268,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 3000,
       cover: "https://covers.openlibrary.org/b/isbn/9780593236598-M.jpg",
-      gradient: "from-teal-600/90 to-slate-950",
+      gradient: "from-teal-700/90 to-slate-950",
     },
     {
       code: "book-hlt-3",
@@ -295,7 +279,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.8",
       price: 2500,
       cover: "https://covers.openlibrary.org/b/isbn/9781250066114-M.jpg",
-      gradient: "from-green-600/90 to-emerald-950",
+      gradient: "from-emerald-800/90 to-slate-950",
     },
     {
       code: "book-dev-1",
@@ -306,7 +290,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 2500,
       cover: "https://covers.openlibrary.org/b/isbn/9780735211292-M.jpg",
-      gradient: "from-indigo-600/90 to-slate-950",
+      gradient: "from-[#142B4A] to-slate-950",
     },
     {
       code: "book-dev-2",
@@ -317,7 +301,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.8",
       price: 2200,
       cover: "https://covers.openlibrary.org/b/isbn/9781455586691-M.jpg",
-      gradient: "from-zinc-600/90 to-zinc-950",
+      gradient: "from-slate-700 to-slate-950",
     },
     {
       code: "book-dev-3",
@@ -328,7 +312,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 2500,
       cover: "https://covers.openlibrary.org/b/isbn/9780743269513-M.jpg",
-      gradient: "from-sky-600/90 to-indigo-950",
+      gradient: "from-teal-800/90 to-slate-950",
     },
     {
       code: "book-gos-1",
@@ -339,7 +323,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 2000,
       cover: "https://covers.openlibrary.org/b/isbn/9780310205715-M.jpg",
-      gradient: "from-amber-500/90 to-orange-950",
+      gradient: "from-amber-700/90 to-slate-950",
     },
     {
       code: "book-gos-2",
@@ -350,7 +334,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 2000,
       cover: "https://covers.openlibrary.org/b/isbn/9780785271765-M.jpg",
-      gradient: "from-cyan-500/90 to-indigo-950",
+      gradient: "from-emerald-700/90 to-slate-950",
     },
     {
       code: "book-gos-3",
@@ -361,7 +345,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.8",
       price: 2200,
       cover: "https://covers.openlibrary.org/b/isbn/9780446691093-M.jpg",
-      gradient: "from-fuchsia-600/90 to-purple-950",
+      gradient: "from-[#142B4A] to-slate-950",
     },
     {
       code: "book-nov-1",
@@ -372,7 +356,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 2000,
       cover: "https://covers.openlibrary.org/b/isbn/9780062315007-M.jpg",
-      gradient: "from-orange-600/90 to-amber-950",
+      gradient: "from-amber-800/90 to-slate-950",
     },
     {
       code: "book-nov-2",
@@ -383,7 +367,7 @@ const DIGITAL_PRODUCTS: {
       rating: "4.9",
       price: 1800,
       cover: "https://covers.openlibrary.org/b/isbn/9780385474542-M.jpg",
-      gradient: "from-rose-700/90 to-stone-950",
+      gradient: "from-rose-900/80 to-slate-950",
     },
     {
       code: "book-nov-3",
@@ -394,12 +378,16 @@ const DIGITAL_PRODUCTS: {
       rating: "4.8",
       price: 2200,
       cover: "https://covers.openlibrary.org/b/isbn/9781616202415-M.jpg",
-      gradient: "from-purple-700/90 to-fuchsia-950",
+      gradient: "from-teal-900/90 to-slate-950",
     },
   ];
 
-const SIDEBAR_ITEMS: { id: TabKey; label: string; icon: any; badge?: number }[] =
-  [
+const SIDEBAR_ITEMS: {
+  id: TabKey;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  badge?: number;
+}[] = [
     { id: "dashboard", label: "Home", icon: Home },
     { id: "vpn", label: "My VPN", icon: Shield },
     { id: "sms", label: "Virtual SMS", icon: Smartphone },
@@ -413,13 +401,18 @@ const SIDEBAR_ITEMS: { id: TabKey; label: string; icon: any; badge?: number }[] 
     { id: "notifications", label: "Notifications", icon: Bell, badge: 2 },
   ];
 
+function parsePriceNgn(priceDisplay: string): number {
+  const digits = priceDisplay.replace(/[^\d]/g, "");
+  return Number(digits) || 0;
+}
+
 function ensurePaystackScript(): Promise<void> {
   return new Promise((resolve, reject) => {
-    if ((window as any).PaystackPop) {
+    if (getPaystackInline()) {
       resolve();
       return;
     }
-    const existing = document.querySelector(
+    const existing = document.querySelector<HTMLScriptElement>(
       'script[src="https://js.paystack.co/v1/inline.js"]'
     );
     if (existing) {
@@ -451,7 +444,9 @@ function DashboardPage() {
   const [selectedNiche, setSelectedNiche] = useState<BookNiche>("All");
 
   // Security & Settings states
-  const [generatedPass, setGeneratedPass] = useState("Ea#9xK2!mP7vQ4$w");
+  const [generatedPass, setGeneratedPass] = useState(() =>
+    generateClientPassword(16)
+  );
   const [fullNameInput, setFullNameInput] = useState("");
   const [newPasswordInput, setNewPasswordInput] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
@@ -463,19 +458,22 @@ function DashboardPage() {
       const { data } = await supabase.auth.getUser();
       if (!mounted) return;
       if (!data.user) {
-        navigate({ to: "/auth" });
+        await navigate({ to: "/auth" });
         return;
       }
       setUser(data.user);
       await fetchOrders(data.user.id);
-      setLoading(false);
+      if (mounted) setLoading(false);
     }
     init();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_e, session) => {
-        if (!session?.user) navigate({ to: "/auth" });
-        else setUser(session.user);
+        if (!session?.user) {
+          void navigate({ to: "/auth" });
+        } else {
+          setUser(session.user);
+        }
       }
     );
     return () => {
@@ -493,14 +491,8 @@ function DashboardPage() {
     if (!error && data) setOrders(data as OrderRecord[]);
   }
 
-  function generateStrongPassword() {
-    const chars =
-      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*";
-    let pass = "";
-    for (let i = 0; i < 16; i++) {
-      pass += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setGeneratedPass(pass);
+  function handleGeneratePassword() {
+    setGeneratedPass(generateClientPassword(16));
   }
 
   async function handleUpdateProfile(e: React.FormEvent) {
@@ -518,8 +510,8 @@ function DashboardPage() {
 
   async function handleUpdatePassword(e: React.FormEvent) {
     e.preventDefault();
-    if (newPasswordInput.length < 6) {
-      setStatusMessage("Password must be at least 6 characters.");
+    if (newPasswordInput.length < 8) {
+      setStatusMessage("Password must be at least 8 characters.");
       return;
     }
     setSavingSettings(true);
@@ -541,7 +533,7 @@ function DashboardPage() {
 
     if (!publicKey) {
       setStatusMessage(
-        "Paystack public key is missing. Check VITE_PAYSTACK_PUBLIC_KEY in Vercel."
+        "Paystack public key is missing. Check VITE_PAYSTACK_PUBLIC_KEY in your environment settings."
       );
       setPayingCode(null);
       return;
@@ -549,7 +541,7 @@ function DashboardPage() {
 
     try {
       await ensurePaystackScript();
-      const PaystackPop = (window as any).PaystackPop;
+      const PaystackPop = getPaystackInline();
       if (!PaystackPop) {
         setStatusMessage(
           "Paystack popup was blocked. Please disable ad-blockers and try again."
@@ -565,19 +557,28 @@ function DashboardPage() {
         amount: price * 100,
         currency: "NGN",
         ref: reference,
-        callback: function (response: { reference: string }) {
-          (async () => {
+        callback: (response: { reference: string }) => {
+          void (async () => {
             try {
-              await (finalizePaystackOrder as any)({
+              await (
+                finalizePaystackOrder as (args: {
+                  data: {
+                    reference: string;
+                    planCode: string;
+                    userId: string;
+                    email: string;
+                  };
+                }) => Promise<unknown>
+              )({
                 data: {
                   reference: response.reference,
                   planCode: code,
                   userId: user.id,
-                  email: user.email,
+                  email: user.email!,
                 },
               });
               setStatusMessage(
-                `Payment confirmed! ${name} is now active on your account.`
+                `Payment confirmed for ${name}. Your account records have been refreshed.`
               );
               await fetchOrders(user.id);
               setActiveTab("dashboard");
@@ -589,34 +590,42 @@ function DashboardPage() {
             }
           })();
         },
-        onClose: function () {
+        onClose: () => {
           setPayingCode(null);
         },
       });
       handler.openIframe();
-    } catch (err: any) {
-      setStatusMessage(
-        err?.message || "Unable to open Paystack checkout. Please try again."
-      );
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Unable to open Paystack checkout. Please try again.";
+      setStatusMessage(msg);
       setPayingCode(null);
     }
   }
 
   async function handleSignOut() {
     await supabase.auth.signOut();
-    navigate({ to: "/auth" });
+    await navigate({ to: "/auth" });
   }
 
   function handleCopyKey(val: string) {
-    navigator.clipboard.writeText(val);
+    void navigator.clipboard.writeText(val);
     setCopiedKey(true);
     setTimeout(() => setCopiedKey(false), 2000);
   }
 
   const displayName =
-    user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Member";
+    (user?.user_metadata?.full_name as string | undefined) ||
+    user?.email?.split("@")[0] ||
+    "Member";
   const latestKeyOrder = orders.find((o) => o.vpn_key);
   const activeKey = latestKeyOrder?.vpn_key || null;
+  const connectionStatus: ConnectionStatus = activeKey
+    ? "connected"
+    : "disconnected";
+  const statusIndicator = getConnectionIndicator(connectionStatus);
   const totalSpent = orders.reduce(
     (sum, o) => sum + (Number(o.amount_ngn) || 0),
     0
@@ -626,9 +635,9 @@ function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#06070a] text-zinc-300">
+      <div className="flex min-h-screen items-center justify-center bg-[#0c192c] text-slate-200">
         <div className="flex items-center gap-3">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#10B981] border-t-transparent" />
           <span className="text-sm font-medium">Loading EspritAccess...</span>
         </div>
       </div>
@@ -636,26 +645,19 @@ function DashboardPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full overflow-x-hidden bg-[#06070a] text-zinc-100">
-      {/* Lively Multi-Tone Ambient Lighting */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-32 left-1/4 h-[420px] w-[580px] rounded-full bg-cyan-500/12 blur-[140px]" />
-        <div className="absolute top-1/3 right-0 h-[360px] w-[420px] rounded-full bg-indigo-600/14 blur-[140px]" />
-        <div className="absolute bottom-0 left-10 h-[300px] w-[360px] rounded-full bg-emerald-500/10 blur-[140px]" />
-      </div>
-
+    <div className="relative flex min-h-screen w-full overflow-x-hidden bg-[#0c192c] text-slate-100">
       {/* Left Sidebar (Desktop) */}
-      <aside className="relative z-10 hidden w-64 shrink-0 flex-col justify-between border-r border-white/[0.06] bg-[#0a0c12]/90 p-4 backdrop-blur-xl lg:flex">
+      <aside className="relative z-10 hidden w-64 shrink-0 flex-col justify-between border-r border-slate-800 bg-[#142B4A]/95 p-4 lg:flex">
         <div>
-          <Link to="/" className="mb-6 flex items-center gap-2.5 px-2 pt-1 group">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-indigo-600 text-sm font-black text-white shadow-[0_0_20px_rgba(6,182,212,0.5)]">
+          <Link to="/" className="group mb-6 flex items-center gap-2.5 px-2 pt-1">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#10B981] text-sm font-black text-[#0c192c]">
               EA
             </span>
             <div>
               <p className="text-base font-bold leading-tight text-white">
-                Esprit<span className="text-cyan-400">Access</span>
+                Esprit<span className="text-emerald-400">Access</span>
               </p>
-              <p className="text-[10px] text-zinc-400 group-hover:text-cyan-300 transition">
+              <p className="text-[10px] text-slate-300 transition group-hover:text-emerald-300">
                 View Main Website ↗
               </p>
             </div>
@@ -670,9 +672,9 @@ function DashboardPage() {
                   key={item.id}
                   type="button"
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 ${active
-                      ? "bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-[0_0_22px_rgba(6,182,212,0.35)]"
-                      : "text-zinc-400 hover:translate-x-0.5 hover:bg-white/[0.04] hover:text-white"
+                  className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-semibold transition ${active
+                      ? "bg-[#10B981] text-[#0c192c]"
+                      : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
                     }`}
                 >
                   <span className="flex items-center gap-3">
@@ -680,7 +682,7 @@ function DashboardPage() {
                     {item.label}
                   </span>
                   {item.badge && (
-                    <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white shadow-[0_0_10px_rgba(244,63,94,0.6)]">
+                    <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                       {item.badge}
                     </span>
                   )}
@@ -694,28 +696,30 @@ function DashboardPage() {
           <button
             type="button"
             onClick={() => setActiveTab("subscriptions")}
-            className="flex w-full items-center justify-between rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 to-transparent p-3 text-left shadow-[0_0_18px_rgba(245,158,11,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-400/50"
+            className="flex w-full items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-left transition hover:border-amber-400"
           >
             <div className="flex items-center gap-2.5">
-              <Crown className="h-4 w-4 text-amber-400" />
+              <Crown className="h-4 w-4 text-amber-300" />
               <div>
-                <p className="text-xs font-bold text-white">Upgrade to Pro</p>
-                <p className="text-[10px] text-zinc-400">Unlock more features</p>
+                <p className="text-xs font-bold text-white">Upgrade Plan</p>
+                <p className="text-[10px] text-slate-300">
+                  Monthly &amp; annual options
+                </p>
               </div>
             </div>
-            <ArrowRight className="h-3.5 w-3.5 text-zinc-400" />
+            <ArrowRight className="h-3.5 w-3.5 text-slate-300" />
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("support")}
-            className="flex w-full items-center gap-2.5 rounded-xl border border-white/[0.06] bg-[#0e1118] p-3 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-500/40"
+            className="flex w-full items-center gap-2.5 rounded-xl border border-slate-700 bg-[#0c192c] p-3 text-left transition hover:border-emerald-400"
           >
-            <Mail className="h-4 w-4 text-cyan-400" />
+            <Mail className="h-4 w-4 text-emerald-400" />
             <div>
               <p className="text-xs font-bold text-white">Need Help?</p>
-              <p className="text-[10px] text-zinc-400">
-                support@espritaccess.com
+              <p className="truncate text-[10px] text-slate-300">
+                {SUPPORT_EMAIL}
               </p>
             </div>
           </button>
@@ -725,41 +729,41 @@ function DashboardPage() {
       {/* Right Main Panel */}
       <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-x-hidden">
         {/* Top Bar */}
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/[0.06] bg-[#06070a]/85 px-4 py-3 backdrop-blur-xl sm:px-6">
-          <div className="relative min-w-0 flex-1 max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-800 bg-[#142B4A]/95 px-4 py-3 backdrop-blur-md sm:px-6">
+          <div className="relative min-w-0 max-w-md flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search VPN, SMS numbers, e-books..."
-              className="w-full rounded-full border border-white/[0.08] bg-[#0e1118] py-2 pl-9 pr-4 text-xs text-white placeholder-zinc-500 focus:border-cyan-500/60 focus:outline-none focus:shadow-[0_0_18px_rgba(6,182,212,0.2)]"
+              className="w-full rounded-full border border-slate-700 bg-[#0c192c] py-2 pl-9 pr-4 text-xs text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none"
             />
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
             <Link
               to="/"
-              className="hidden items-center gap-1.5 rounded-full border border-white/[0.08] bg-[#0e1118] px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-cyan-500/40 hover:text-white md:inline-flex"
+              className="hidden items-center gap-1.5 rounded-full border border-slate-700 bg-[#0c192c] px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-emerald-400 hover:text-white md:inline-flex"
             >
-              <ExternalLink className="h-3.5 w-3.5 text-cyan-400" />
+              <ExternalLink className="h-3.5 w-3.5 text-emerald-400" />
               Main Site
             </Link>
 
             <button
               type="button"
               onClick={() => setActiveTab("notifications")}
-              className="relative rounded-full border border-white/[0.08] bg-[#0e1118] p-2 text-zinc-300 transition hover:border-cyan-500/40"
+              className="relative rounded-full border border-slate-700 bg-[#0c192c] p-2 text-slate-200 transition hover:border-emerald-400"
             >
               <Bell className="h-4 w-4" />
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500" />
             </button>
 
-            <div className="hidden items-center gap-2 rounded-full border border-emerald-500/25 bg-[#0e1118] px-3 py-1.5 shadow-[0_0_16px_rgba(16,185,129,0.1)] sm:flex">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-bold text-zinc-950 shadow-[0_0_12px_rgba(16,185,129,0.65)]">
+            <div className="hidden items-center gap-2 rounded-full border border-emerald-500/30 bg-[#0c192c] px-3 py-1.5 sm:flex">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#10B981] text-[11px] font-bold text-[#0c192c]">
                 {displayName.charAt(0).toUpperCase()}
               </span>
-              <span className="max-w-[130px] truncate text-xs font-bold text-emerald-400">
+              <span className="max-w-[130px] truncate text-xs font-bold text-emerald-300">
                 {displayName}
               </span>
             </div>
@@ -767,7 +771,7 @@ function DashboardPage() {
             <button
               type="button"
               onClick={handleSignOut}
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-[#0e1118] px-3.5 py-2 text-xs font-semibold text-zinc-300 transition hover:border-rose-500/40 hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-[#0c192c] px-3.5 py-2 text-xs font-semibold text-slate-200 transition hover:border-rose-400 hover:text-white"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Sign Out</span>
@@ -776,15 +780,15 @@ function DashboardPage() {
         </header>
 
         {/* Mobile Nav Strip */}
-        <div className="flex w-full gap-2 overflow-x-auto border-b border-white/[0.06] bg-[#0a0c12] px-4 py-2.5 lg:hidden">
+        <div className="flex w-full gap-2 overflow-x-auto border-b border-slate-800 bg-[#142B4A] px-4 py-2.5 lg:hidden">
           {SIDEBAR_ITEMS.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => setActiveTab(item.id)}
               className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold ${activeTab === item.id
-                  ? "bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-[0_0_16px_rgba(6,182,212,0.4)]"
-                  : "border border-white/[0.06] bg-[#0e1118] text-zinc-400"
+                  ? "bg-[#10B981] text-[#0c192c]"
+                  : "border border-slate-700 bg-[#0c192c] text-slate-300"
                 }`}
             >
               {item.label}
@@ -795,7 +799,7 @@ function DashboardPage() {
         {/* Main Content */}
         <main className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
           {statusMessage && (
-            <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/30 px-4 py-3 text-xs font-medium text-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+            <div className="rounded-xl border border-emerald-500/35 bg-emerald-950/40 px-4 py-3 text-xs font-medium text-emerald-200">
               {statusMessage}
             </div>
           )}
@@ -807,72 +811,78 @@ function DashboardPage() {
                 <div className="min-w-0">
                   <h1 className="break-words text-xl font-extrabold text-white sm:text-2xl">
                     Welcome back,{" "}
-                    <span className="text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.5)]">
-                      {displayName}
-                    </span>{" "}
-                    👋
+                    <span className="text-emerald-400">{displayName}</span>
                   </h1>
-                  <p className="mt-1 text-xs text-zinc-400">
-                    Your digital access is just a click away.
+                  <p className="mt-1 text-xs text-slate-300">
+                    Your VPN setup, subscriptions, and digital tools in one
+                    place.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-2.5 shadow-[0_0_25px_rgba(16,185,129,0.12)]">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
-                    <Shield className="h-5 w-5" />
-                  </div>
+                <div
+                  className={`flex items-center gap-3 rounded-2xl border px-4 py-2.5 ${statusIndicator.pillClass}`}
+                >
+                  <span
+                    className={`h-2.5 w-2.5 shrink-0 rounded-full ${statusIndicator.dotClass}`}
+                  />
                   <div>
-                    <p className="text-xs font-bold text-emerald-400">
-                      {activeKey ? "Active & Secure" : "Ready to Activate"}
-                    </p>
-                    <p className="text-[11px] text-zinc-400">
+                    <p className="text-xs font-bold">{statusIndicator.label}</p>
+                    <p className="text-[11px] text-slate-300">
                       {activeKey
-                        ? "Your connection is protected"
-                        : "Select a plan to connect"}
+                        ? "VPN key available in My VPN"
+                        : "No active VPN configuration yet"}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* 4 Floating Glowing KPI Cards */}
+              {/* 4 KPI Cards */}
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl border border-cyan-400/25 bg-gradient-to-br from-cyan-500/90 to-indigo-700 p-5 shadow-[0_0_30px_rgba(6,182,212,0.28)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_40px_rgba(6,182,212,0.48)]">
+                <div className="rounded-2xl border border-slate-700/80 bg-[#142B4A] p-5">
                   <div className="flex items-center justify-between">
-                    <Shield className="h-6 w-6 text-white" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_10px_#6ee7b7]" />
+                    <Shield className="h-6 w-6 text-emerald-400" />
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${statusIndicator.dotClass}`}
+                    />
                   </div>
-                  <p className="mt-4 text-sm font-bold text-white">Active VPN</p>
-                  <p className="text-xs text-cyan-100">
-                    {activeKey ? "Connected" : "Not Activated"}
+                  <p className="mt-4 text-sm font-bold text-white">
+                    My VPN Status
+                  </p>
+                  <p className="text-xs text-slate-300">
+                    {statusIndicator.label}
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-white/[0.06] bg-[#0d1017] p-5 shadow-[0_0_20px_rgba(0,0,0,0.4)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/40 hover:shadow-[0_0_25px_rgba(6,182,212,0.15)]">
-                  <p className="text-[11px] font-medium text-zinc-400">
+                <div className="rounded-2xl border border-slate-700/80 bg-[#142B4A] p-5">
+                  <p className="text-[11px] font-medium text-slate-300">
                     Subscription Plan
                   </p>
                   <p className="mt-2 text-lg font-extrabold text-white">
                     {currentPlanName}
                   </p>
-                  <p className="mt-1 text-[11px] text-cyan-400">
-                    {activeKey ? "Instant Vault Active" : "Upgrade anytime"}
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("subscriptions")}
+                    className="mt-1 text-[11px] font-semibold text-emerald-400 hover:underline"
+                  >
+                    Manage Subscriptions →
+                  </button>
                 </div>
 
-                <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-950/70 to-[#0d1017] p-5 shadow-[0_0_20px_rgba(99,102,241,0.12)] transition-all duration-300 hover:-translate-y-1 hover:border-indigo-400/50 hover:shadow-[0_0_28px_rgba(99,102,241,0.25)]">
-                  <p className="text-[11px] font-medium text-indigo-200">
+                <div className="rounded-2xl border border-slate-700/80 bg-[#142B4A] p-5">
+                  <p className="text-[11px] font-medium text-slate-300">
                     Total Spent
                   </p>
                   <p className="mt-2 text-xl font-extrabold text-white">
                     ₦{totalSpent.toLocaleString()}
                   </p>
-                  <p className="mt-1 text-[11px] text-zinc-400">
+                  <p className="mt-1 text-[11px] text-slate-400">
                     Lifetime ({orders.length} orders)
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-950/50 to-[#0d1017] p-5 shadow-[0_0_20px_rgba(16,185,129,0.1)] transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400/50 hover:shadow-[0_0_25px_rgba(16,185,129,0.22)]">
-                  <p className="text-[11px] font-medium text-emerald-200">
+                <div className="rounded-2xl border border-slate-700/80 bg-[#142B4A] p-5">
+                  <p className="text-[11px] font-medium text-slate-300">
                     Referral Bonus
                   </p>
                   <p className="mt-2 text-xl font-extrabold text-white">₦0</p>
@@ -886,21 +896,21 @@ function DashboardPage() {
                 </div>
               </div>
 
-              {/* Lively EspritAccess Community & Office Connection Showcase */}
+              {/* Community & Office Connection Showcase */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h2 className="text-sm font-bold text-white">
-                    Built for Modern Work & Global Connection
+                    Built for Modern Work &amp; Connection
                   </h2>
-                  <span className="text-[11px] text-cyan-400">
-                    EspritAccess Community
+                  <span className="text-[11px] text-emerald-400">
+                    EspritAccess
                   </span>
                 </div>
                 <div className="grid gap-4 md:grid-cols-3">
                   {COMMUNITY_SHOWCASE.map((item) => (
                     <div
                       key={item.title}
-                      className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0d1017] shadow-[0_0_22px_rgba(0,0,0,0.45)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/40 hover:shadow-[0_0_28px_rgba(6,182,212,0.18)]"
+                      className="group relative overflow-hidden rounded-2xl border border-slate-700/80 bg-[#142B4A]"
                     >
                       <div className="relative h-36 w-full overflow-hidden">
                         <img
@@ -909,8 +919,8 @@ function DashboardPage() {
                           loading="lazy"
                           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0d1017] via-[#0d1017]/40 to-transparent" />
-                        <span className="absolute left-3 top-3 rounded-full border border-white/10 bg-[#06070a]/75 px-2.5 py-0.5 text-[10px] font-semibold text-cyan-300 backdrop-blur-md">
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#142B4A] via-[#142B4A]/40 to-transparent" />
+                        <span className="absolute left-3 top-3 rounded-full border border-slate-600 bg-[#0c192c]/85 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-300">
                           {item.badge}
                         </span>
                       </div>
@@ -918,7 +928,7 @@ function DashboardPage() {
                         <h3 className="text-sm font-bold text-white">
                           {item.title}
                         </h3>
-                        <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                        <p className="mt-1 text-xs leading-relaxed text-slate-300">
                           {item.subtitle}
                         </p>
                       </div>
@@ -929,63 +939,65 @@ function DashboardPage() {
 
               {/* Activity Overview + Quick Actions */}
               <div className="grid gap-6 lg:grid-cols-3">
-                <div className="rounded-2xl border border-white/[0.06] bg-[#0d1017] p-5 shadow-[0_0_22px_rgba(0,0,0,0.4)] transition-all duration-300 hover:border-cyan-500/30 lg:col-span-2">
+                <div className="rounded-2xl border border-slate-700/80 bg-[#142B4A] p-5 lg:col-span-2">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-bold text-white">
-                      Your Activity Overview
+                      Connection Summary
                     </h2>
-                    <span className="rounded-full border border-white/[0.08] bg-[#06070a] px-3 py-1 text-[11px] text-zinc-400">
-                      Last 30 Days
-                    </span>
+                    <Link
+                      to="/setup-guide"
+                      className="text-xs font-semibold text-emerald-400 hover:underline"
+                    >
+                      VPN Setup Guide →
+                    </Link>
                   </div>
 
-                  <div className="mt-4 grid items-center gap-4 sm:grid-cols-[1fr_160px]">
+                  <div className="mt-4 grid items-center gap-4 sm:grid-cols-[1fr_170px]">
                     <svg viewBox="0 0 400 120" className="h-32 w-full">
                       <defs>
-                        <linearGradient id="eaGlow" x1="0" y1="0" x2="0" y2="1">
+                        <linearGradient id="eaTeal" x1="0" y1="0" x2="0" y2="1">
                           <stop
                             offset="0%"
-                            stopColor="#22d3ee"
-                            stopOpacity="0.4"
+                            stopColor="#10B981"
+                            stopOpacity="0.35"
                           />
                           <stop
                             offset="100%"
-                            stopColor="#22d3ee"
+                            stopColor="#10B981"
                             stopOpacity="0"
                           />
                         </linearGradient>
                       </defs>
                       <path
                         d="M0 95 Q 50 65, 100 80 T 200 55 T 300 68 T 400 25 L 400 120 L 0 120 Z"
-                        fill="url(#eaGlow)"
+                        fill="url(#eaTeal)"
                       />
                       <path
                         d="M0 95 Q 50 65, 100 80 T 200 55 T 300 68 T 400 25"
                         fill="none"
-                        stroke="#22d3ee"
+                        stroke="#10B981"
                         strokeWidth="3"
                         strokeLinecap="round"
                       />
                     </svg>
 
-                    <div className="space-y-3 border-t border-white/[0.06] pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+                    <div className="space-y-3 border-t border-slate-700/80 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
                       <div>
-                        <p className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-                          <Globe className="h-3.5 w-3.5 text-cyan-400" />{" "}
-                          Countries Accessed
+                        <p className="flex items-center gap-1.5 text-[11px] text-slate-300">
+                          <Globe className="h-3.5 w-3.5 text-emerald-400" />
+                          Supported Platforms
                         </p>
-                        <p className="text-lg font-bold text-white">4</p>
-                        <p className="text-[10px] text-zinc-500">
-                          USA, UK, Germany, Canada
+                        <p className="text-sm font-bold text-white">
+                          Android, iOS, Windows
                         </p>
                       </div>
                       <div>
-                        <p className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-                          <Zap className="h-3.5 w-3.5 text-amber-400" /> Data
-                          Protected
+                        <p className="flex items-center gap-1.5 text-[11px] text-slate-300">
+                          <Zap className="h-3.5 w-3.5 text-emerald-400" />
+                          Configuration State
                         </p>
-                        <p className="text-lg font-bold text-white">
-                          {activeKey ? "12.5 GB" : "0.0 GB"}
+                        <p className="text-sm font-bold text-white">
+                          {statusIndicator.label}
                         </p>
                       </div>
                     </div>
@@ -993,15 +1005,15 @@ function DashboardPage() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="rounded-2xl border border-white/[0.06] bg-[#0d1017] p-5 shadow-[0_0_22px_rgba(0,0,0,0.4)]">
+                <div className="rounded-2xl border border-slate-700/80 bg-[#142B4A] p-5">
                   <h2 className="flex items-center gap-1.5 text-sm font-bold text-white">
-                    <Zap className="h-4 w-4 text-cyan-400" /> Quick Actions
+                    <Zap className="h-4 w-4 text-emerald-400" /> Quick Actions
                   </h2>
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     {[
                       {
-                        label: "Connect VPN",
-                        sub: "View your key",
+                        label: "My VPN",
+                        sub: "Connection & key",
                         tab: "vpn" as TabKey,
                         icon: Shield,
                       },
@@ -1013,13 +1025,13 @@ function DashboardPage() {
                       },
                       {
                         label: "Digital Products",
-                        sub: "E-books & kits",
+                        sub: "E-books",
                         tab: "products" as TabKey,
                         icon: BookOpen,
                       },
                       {
                         label: "Security Tools",
-                        sub: "Stay extra safe",
+                        sub: "Password generator",
                         tab: "security" as TabKey,
                         icon: Lock,
                       },
@@ -1030,13 +1042,13 @@ function DashboardPage() {
                           key={qa.label}
                           type="button"
                           onClick={() => setActiveTab(qa.tab)}
-                          className="rounded-xl border border-white/[0.06] bg-[#131722] p-3 text-left transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/45 hover:shadow-[0_0_20px_rgba(6,182,212,0.18)]"
+                          className="rounded-xl border border-slate-700 bg-[#0c192c] p-3 text-left transition hover:border-emerald-400"
                         >
-                          <Icon className="h-4 w-4 text-cyan-400" />
+                          <Icon className="h-4 w-4 text-emerald-400" />
                           <p className="mt-2 text-xs font-bold text-white">
                             {qa.label}
                           </p>
-                          <p className="text-[10px] text-zinc-400">{qa.sub}</p>
+                          <p className="text-[10px] text-slate-400">{qa.sub}</p>
                         </button>
                       );
                     })}
@@ -1044,22 +1056,30 @@ function DashboardPage() {
                 </div>
               </div>
 
-              {/* Active VPN Key + Promo Banner */}
+              {/* Active VPN Key + Banner */}
               <div className="grid gap-6 lg:grid-cols-2">
-                <div className="rounded-2xl border border-cyan-500/20 bg-[#0d1017] p-5 shadow-[0_0_28px_rgba(6,182,212,0.1)] transition-all duration-300 hover:-translate-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <KeyRound className="h-4 w-4 text-cyan-400" />
-                    <h2 className="text-sm font-bold text-white">
-                      Your Active VPN Key
-                    </h2>
+                <div className="rounded-2xl border border-slate-700/80 bg-[#142B4A] p-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <KeyRound className="h-4 w-4 text-emerald-400" />
+                      <h2 className="text-sm font-bold text-white">
+                        My VPN Configuration
+                      </h2>
+                    </div>
+                    <span
+                      className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${statusIndicator.pillClass}`}
+                    >
+                      {statusIndicator.label}
+                    </span>
                   </div>
+
                   {activeKey ? (
-                    <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-[#06070a] px-3.5 py-2.5 font-mono text-xs text-cyan-300">
+                    <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-slate-700 bg-[#0c192c] px-3.5 py-2.5 font-mono text-xs text-emerald-300">
                       <span className="truncate">{activeKey}</span>
                       <button
                         type="button"
                         onClick={() => handleCopyKey(activeKey)}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-3.5 py-1.5 font-sans text-xs font-semibold text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:opacity-95"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#10B981] px-3.5 py-1.5 font-sans text-xs font-bold text-[#0c192c]"
                       >
                         {copiedKey ? (
                           <Check className="h-3.5 w-3.5" />
@@ -1071,99 +1091,182 @@ function DashboardPage() {
                     </div>
                   ) : (
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-xs text-zinc-400">
-                        Activate a VPN plan to unlock your encrypted key
-                        immediately.
+                      <p className="text-xs text-slate-300">
+                        Choose a plan in Subscriptions to retrieve your VPN
+                        configuration.
                       </p>
                       <button
                         type="button"
                         onClick={() => setActiveTab("subscriptions")}
-                        className="shrink-0 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-[0_0_22px_rgba(6,182,212,0.45)] transition hover:opacity-95"
+                        className="shrink-0 rounded-full bg-[#10B981] px-5 py-2 text-xs font-bold text-[#0c192c] transition hover:bg-emerald-400"
                       >
-                        Get a VPN Key
+                        View Plans
                       </button>
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between rounded-2xl border border-indigo-500/25 bg-gradient-to-r from-cyan-500/15 via-[#0d1017] to-indigo-600/20 p-5 shadow-[0_0_28px_rgba(99,102,241,0.12)] transition-all duration-300 hover:-translate-y-0.5">
+                <div className="flex items-center justify-between rounded-2xl border border-slate-700/80 bg-[#142B4A] p-5">
                   <div>
                     <p className="text-base font-extrabold text-white">
-                      Unlock the World with EspritAccess
+                      Need Setup Instructions?
                     </p>
-                    <p className="mt-1 text-xs text-zinc-300">
-                      Stream. Work. Connect. Without Limits.
+                    <p className="mt-1 text-xs text-slate-300">
+                      Follow step-by-step instructions for Android, iOS, and
+                      Windows.
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("subscriptions")}
-                      className="mt-3 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-zinc-950 hover:bg-cyan-50"
+                    <Link
+                      to="/setup-guide"
+                      className="mt-3 inline-block rounded-full bg-[#10B981] px-4 py-1.5 text-xs font-bold text-[#0c192c] transition hover:bg-emerald-400"
                     >
-                      Explore Plans →
-                    </button>
+                      Open Setup Guide →
+                    </Link>
                   </div>
-                  <Sparkles className="hidden h-10 w-10 text-cyan-300 sm:block" />
+                  <Sparkles className="hidden h-10 w-10 text-emerald-400 sm:block" />
                 </div>
               </div>
             </div>
           )}
 
-          {/* MY VPN & SUBSCRIPTIONS TABS */}
-          {(activeTab === "vpn" || activeTab === "subscriptions") && (
+          {/* MY VPN TAB */}
+          {activeTab === "vpn" && (
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-white">My VPN</h1>
+                  <p className="text-xs text-slate-300">
+                    Connection status, configuration details, and device setup.
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusIndicator.pillClass}`}
+                >
+                  {statusIndicator.label}
+                </span>
+              </div>
+
+              <div className="rounded-2xl border border-slate-700/80 bg-[#142B4A] p-6">
+                <h2 className="text-sm font-bold text-white">
+                  Configuration Key
+                </h2>
+                {activeKey ? (
+                  <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-slate-700 bg-[#0c192c] px-4 py-3 font-mono text-xs text-emerald-300">
+                    <span className="truncate">{activeKey}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyKey(activeKey)}
+                      className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#10B981] px-4 py-1.5 font-sans text-xs font-bold text-[#0c192c]"
+                    >
+                      {copiedKey ? (
+                        <Check className="h-3.5 w-3.5" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
+                      {copiedKey ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-xs text-slate-300">
+                    No active VPN key on this account yet. Visit{" "}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("subscriptions")}
+                      className="font-semibold text-emerald-400 underline"
+                    >
+                      Subscriptions
+                    </button>{" "}
+                    to select a plan.
+                  </p>
+                )}
+
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    to="/setup-guide"
+                    className="rounded-full bg-[#10B981] px-4 py-2 text-xs font-bold text-[#0c192c] transition hover:bg-emerald-400"
+                  >
+                    Android, iOS &amp; Windows Setup Guide
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("subscriptions")}
+                    className="rounded-full border border-slate-600 bg-[#0c192c] px-4 py-2 text-xs font-semibold text-white transition hover:border-emerald-400"
+                  >
+                    Manage Subscriptions
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SUBSCRIPTIONS TAB */}
+          {activeTab === "subscriptions" && (
             <div className="space-y-6">
               <div>
-                <h1 className="text-2xl font-bold text-white">
-                  VPN Plans & Access
-                </h1>
-                <p className="text-xs text-zinc-400">
-                  Pay in Naira via Paystack for instant key delivery.
+                <h1 className="text-2xl font-bold text-white">Subscriptions</h1>
+                <p className="text-xs text-slate-300">
+                  Review monthly vs. annual billing periods before paying in
+                  NGN via Paystack.
                 </p>
               </div>
               <div className="grid gap-5 lg:grid-cols-3">
-                {VPN_PLANS.map((plan) => (
-                  <div
-                    key={plan.code}
-                    className={`flex flex-col justify-between rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1.5 ${plan.featured
-                        ? "border border-cyan-500/50 bg-[#101420] shadow-[0_0_40px_rgba(6,182,212,0.2)]"
-                        : "border border-white/[0.06] bg-[#0d1017] hover:border-cyan-500/35"
-                      }`}
-                  >
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-400">
-                        {plan.tag}
-                      </span>
-                      <h3 className="mt-1 text-xl font-bold text-white">
-                        {plan.name}
-                      </h3>
-                      <p className="mt-3 text-3xl font-extrabold text-white">
-                        ₦{plan.price.toLocaleString()}
-                        <span className="text-xs font-normal text-zinc-400">
-                          {" "}
-                          {plan.period}
-                        </span>
-                      </p>
-                      <ul className="mt-4 space-y-2 text-xs text-zinc-300">
-                        {plan.features.map((f) => (
-                          <li key={f} className="flex items-center gap-2">
-                            <Check className="h-3.5 w-3.5 text-cyan-400" /> {f}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={payingCode === plan.code}
-                      onClick={() =>
-                        handleCheckout(plan.code, plan.name, plan.price)
-                      }
-                      className="mt-6 w-full rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 py-2.5 text-xs font-bold text-white shadow-[0_0_20px_rgba(6,182,212,0.4)] transition hover:opacity-95 disabled:opacity-60"
+                {PRICING_PLANS.map((plan) => {
+                  const amountNgn = parsePriceNgn(plan.priceDisplay);
+                  const isFeatured = plan.id === "plus";
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`flex flex-col justify-between rounded-2xl p-6 ${isFeatured
+                          ? "border border-emerald-400/60 bg-[#142B4A]"
+                          : "border border-slate-700/80 bg-[#142B4A]"
+                        }`}
                     >
-                      {payingCode === plan.code
-                        ? "Opening Paystack..."
-                        : `Pay ₦${plan.price.toLocaleString()}`}
-                    </button>
-                  </div>
-                ))}
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="text-xl font-bold text-white">
+                            {plan.name}
+                          </h3>
+                          <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300">
+                            {plan.billingPeriod}
+                          </span>
+                        </div>
+                        <p className="mt-3 text-3xl font-extrabold text-white">
+                          {plan.priceDisplay}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-emerald-300">
+                          {plan.billingLabel}
+                        </p>
+                        <p className="mt-2 text-xs text-slate-300">
+                          {plan.summary}
+                        </p>
+                        <ul className="mt-4 space-y-2 text-xs text-slate-200">
+                          {plan.features.map((f) => (
+                            <li key={f} className="flex items-center gap-2">
+                              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="mt-6 border-t border-slate-700/80 pt-4">
+                        <p className="mb-3 text-[11px] text-slate-300">
+                          {plan.preCheckoutNote}
+                        </p>
+                        <button
+                          type="button"
+                          disabled={payingCode === plan.id}
+                          onClick={() =>
+                            handleCheckout(plan.id, plan.name, amountNgn)
+                          }
+                          className="w-full rounded-full bg-[#10B981] py-2.5 text-xs font-bold text-[#0c192c] transition hover:bg-emerald-400 disabled:opacity-60"
+                        >
+                          {payingCode === plan.id
+                            ? "Opening Paystack..."
+                            : `Pay ${plan.priceDisplay}`}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1176,13 +1279,12 @@ function DashboardPage() {
                   <h1 className="text-2xl font-bold text-white">
                     Virtual SMS Numbers
                   </h1>
-                  <p className="text-xs text-zinc-400">
-                    Clean, non-VoIP numbers for instant OTP verification—paid in
-                    Naira.
+                  <p className="text-xs text-slate-300">
+                    Select a number option and pay in Naira via Paystack.
                   </p>
                 </div>
-                <span className="rounded-full border border-emerald-500/25 bg-emerald-950/40 px-3 py-1 text-[11px] font-semibold text-emerald-300">
-                  ● Live Stock Available
+                <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-300">
+                  NGN Checkout Ready
                 </span>
               </div>
 
@@ -1190,7 +1292,7 @@ function DashboardPage() {
                 {VIRTUAL_NUMBERS.map((num) => (
                   <div
                     key={num.code}
-                    className="flex flex-col justify-between rounded-2xl border border-white/[0.06] bg-[#0d1017] p-5 shadow-[0_0_20px_rgba(0,0,0,0.4)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/45 hover:shadow-[0_0_25px_rgba(6,182,212,0.16)]"
+                    className="flex flex-col justify-between rounded-2xl border border-slate-700/80 bg-[#142B4A] p-5"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2">
@@ -1203,12 +1305,12 @@ function DashboardPage() {
                           />
                           {num.country} ({num.dialCode})
                         </span>
-                        <span className="shrink-0 rounded-full bg-cyan-500/15 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300">
+                        <span className="shrink-0 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
                           {num.tag}
                         </span>
                       </div>
 
-                      <div className="mt-3 rounded-xl border border-white/[0.06] bg-[#06070a] px-3 py-2 font-mono text-xs text-cyan-300">
+                      <div className="mt-3 rounded-xl border border-slate-700 bg-[#0c192c] px-3 py-2 font-mono text-xs text-emerald-300">
                         Sample: {num.sampleNumber}
                       </div>
 
@@ -1216,27 +1318,27 @@ function DashboardPage() {
                         {num.service}
                       </p>
 
-                      <div className="mt-2 space-y-1 text-[11px] text-zinc-400">
+                      <div className="mt-2 space-y-1 text-[11px] text-slate-300">
                         <p>
                           Type:{" "}
-                          <span className="text-zinc-200">{num.type}</span>
+                          <span className="text-slate-100">{num.type}</span>
                         </p>
                         <p>
                           Delivery:{" "}
-                          <span className="text-emerald-400">
+                          <span className="text-emerald-300">
                             {num.delivery}
                           </span>
                         </p>
                         <p>
-                          Success Rate:{" "}
-                          <span className="text-zinc-200">
+                          Route:{" "}
+                          <span className="text-slate-100">
                             {num.successRate}
                           </span>
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-5 flex items-center justify-between border-t border-white/[0.06] pt-4">
+                    <div className="mt-5 flex items-center justify-between border-t border-slate-700/80 pt-4">
                       <p className="text-xl font-extrabold text-white">
                         ₦{num.price.toLocaleString()}
                       </p>
@@ -1250,7 +1352,7 @@ function DashboardPage() {
                             num.price
                           )
                         }
-                        className="rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-[0_0_18px_rgba(6,182,212,0.4)] transition hover:opacity-95 disabled:opacity-60"
+                        className="rounded-full bg-[#10B981] px-4 py-2 text-xs font-bold text-[#0c192c] transition hover:bg-emerald-400 disabled:opacity-60"
                       >
                         {payingCode === num.code ? "Opening..." : "Get Number"}
                       </button>
@@ -1266,10 +1368,10 @@ function DashboardPage() {
             <div className="space-y-6">
               <div>
                 <h1 className="text-2xl font-bold text-white">
-                  E-books & Digital Library
+                  E-books &amp; Digital Library
                 </h1>
-                <p className="text-xs text-zinc-400">
-                  Best-selling e-books across Finance, Health, Self-Development,
+                <p className="text-xs text-slate-300">
+                  Browse e-books across Finance, Health, Self-Development,
                   Gospel, and Novels.
                 </p>
               </div>
@@ -1281,8 +1383,8 @@ function DashboardPage() {
                     type="button"
                     onClick={() => setSelectedNiche(niche)}
                     className={`rounded-full px-4 py-2 text-xs font-semibold transition ${selectedNiche === niche
-                        ? "bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-[0_0_18px_rgba(6,182,212,0.4)]"
-                        : "border border-white/[0.07] bg-[#0d1017] text-zinc-300 hover:border-cyan-500/40"
+                        ? "bg-[#10B981] text-[#0c192c]"
+                        : "border border-slate-700 bg-[#142B4A] text-slate-200 hover:border-emerald-400"
                       }`}
                   >
                     {niche}
@@ -1296,7 +1398,7 @@ function DashboardPage() {
                 ).map((book) => (
                   <div
                     key={book.code}
-                    className="flex flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0d1017] shadow-[0_0_20px_rgba(0,0,0,0.4)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/45 hover:shadow-[0_0_25px_rgba(6,182,212,0.16)]"
+                    className="flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-700/80 bg-[#142B4A]"
                   >
                     <div
                       className={`flex items-center gap-4 bg-gradient-to-br ${book.gradient} p-4`}
@@ -1305,7 +1407,7 @@ function DashboardPage() {
                         src={book.cover}
                         alt={book.title}
                         loading="lazy"
-                        className="h-28 w-20 shrink-0 rounded-lg border border-white/15 object-cover shadow-lg"
+                        className="h-28 w-20 shrink-0 rounded-lg border border-white/15 object-cover"
                       />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-white/80">
@@ -1323,7 +1425,7 @@ function DashboardPage() {
 
                     <div className="flex items-center justify-between p-4">
                       <div>
-                        <p className="text-[10px] text-zinc-400">
+                        <p className="text-[10px] text-slate-300">
                           {book.format}
                         </p>
                         <p className="text-lg font-extrabold text-white">
@@ -1336,7 +1438,7 @@ function DashboardPage() {
                         onClick={() =>
                           handleCheckout(book.code, book.title, book.price)
                         }
-                        className="rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] transition hover:opacity-95 disabled:opacity-60"
+                        className="rounded-full bg-[#10B981] px-4 py-2 text-xs font-bold text-[#0c192c] transition hover:bg-emerald-400 disabled:opacity-60"
                       >
                         {payingCode === book.code ? "Opening..." : "Buy E-book"}
                       </button>
@@ -1349,32 +1451,32 @@ function DashboardPage() {
 
           {/* BILLING & PAYMENTS TAB */}
           {activeTab === "billing" && (
-            <div className="rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6">
+            <div className="rounded-2xl border border-slate-700/80 bg-[#142B4A] p-6">
               <h2 className="text-lg font-bold text-white">
-                Billing & Payment History
+                Billing &amp; Payment History
               </h2>
               {orders.length === 0 ? (
-                <p className="mt-3 text-xs text-zinc-400">No payments yet.</p>
+                <p className="mt-3 text-xs text-slate-300">No payments yet.</p>
               ) : (
                 <div className="mt-4 space-y-3">
                   {orders.map((o) => (
                     <div
                       key={o.id}
-                      className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-[#06070a] px-4 py-3 text-xs"
+                      className="flex items-center justify-between rounded-xl border border-slate-700 bg-[#0c192c] px-4 py-3 text-xs"
                     >
                       <div>
                         <p className="font-bold text-white">
                           {o.plan_name || o.plan_code || "Order"}
                         </p>
-                        <p className="text-zinc-400">
+                        <p className="text-slate-400">
                           Ref: {o.reference || o.id}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-cyan-400">
+                        <p className="font-bold text-emerald-400">
                           ₦{(o.amount_ngn || 0).toLocaleString()}
                         </p>
-                        <p className="uppercase text-emerald-400">
+                        <p className="uppercase text-slate-200">
                           {o.status || "Paid"}
                         </p>
                       </div>
@@ -1390,32 +1492,32 @@ function DashboardPage() {
             <div className="space-y-6">
               <div>
                 <h1 className="text-2xl font-bold text-white">
-                  Security & Privacy Tools
+                  Security &amp; Privacy Tools
                 </h1>
-                <p className="text-xs text-zinc-400">
-                  Built-in privacy utilities to lock down your accounts and
-                  connections.
+                <p className="text-xs text-slate-300">
+                  Generate strong passwords locally in your browser and review
+                  your VPN state.
                 </p>
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
-                <div className="space-y-4 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/40 hover:shadow-[0_0_25px_rgba(6,182,212,0.16)]">
-                  <div className="flex items-center gap-2 text-cyan-400">
+                <div className="space-y-4 rounded-2xl border border-slate-700/80 bg-[#142B4A] p-6">
+                  <div className="flex items-center gap-2 text-emerald-400">
                     <KeyRound className="h-5 w-5" />
                     <h2 className="text-sm font-bold text-white">
                       Strong Password Generator
                     </h2>
                   </div>
-                  <p className="text-xs text-zinc-400">
-                    Generate a 16-character encrypted password for your
+                  <p className="text-xs text-slate-300">
+                    Generate a 16-character password in your browser for your
                     accounts.
                   </p>
-                  <div className="flex items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-[#06070a] px-3.5 py-2.5 font-mono text-xs text-cyan-300">
+                  <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-700 bg-[#0c192c] px-3.5 py-2.5 font-mono text-xs text-emerald-300">
                     <span className="truncate">{generatedPass}</span>
                     <button
                       type="button"
                       onClick={() => handleCopyKey(generatedPass)}
-                      className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-3 py-1.5 font-sans text-xs font-semibold text-white"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#10B981] px-3 py-1.5 font-sans text-xs font-bold text-[#0c192c]"
                     >
                       {copiedKey ? (
                         <Check className="h-3.5 w-3.5" />
@@ -1427,34 +1529,31 @@ function DashboardPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={generateStrongPassword}
-                    className="w-full rounded-full border border-white/[0.08] bg-white/[0.03] py-2 text-xs font-bold text-white transition hover:border-cyan-400/50"
+                    onClick={handleGeneratePassword}
+                    className="w-full rounded-full border border-slate-600 bg-[#0c192c] py-2 text-xs font-bold text-white transition hover:border-emerald-400"
                   >
                     Generate New Password
                   </button>
                 </div>
 
-                <div className="space-y-3 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40">
-                  <div className="flex items-center gap-2 text-cyan-400">
+                <div className="space-y-3 rounded-2xl border border-slate-700/80 bg-[#142B4A] p-6">
+                  <div className="flex items-center gap-2 text-emerald-400">
                     <Shield className="h-5 w-5" />
                     <h2 className="text-sm font-bold text-white">
-                      Connection Shield
+                      Connection Overview
                     </h2>
                   </div>
                   {[
-                    { label: "DNS Leak Protection", status: "Enabled" },
-                    { label: "Zero-Logs Routing Policy", status: "Verified" },
-                    {
-                      label: "AES-256 Tunnel Encryption",
-                      status: activeKey ? "Active" : "Standby",
-                    },
+                    { label: "Account Authentication", status: "Supabase Auth" },
+                    { label: "VPN Configuration", status: statusIndicator.label },
+                    { label: "Setup Guide", status: "Android / iOS / Windows" },
                   ].map((item) => (
                     <div
                       key={item.label}
-                      className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-[#06070a] px-4 py-2.5 text-xs"
+                      className="flex items-center justify-between rounded-xl border border-slate-700 bg-[#0c192c] px-4 py-2.5 text-xs"
                     >
-                      <span className="text-zinc-300">{item.label}</span>
-                      <span className="font-bold text-emerald-400">
+                      <span className="text-slate-300">{item.label}</span>
+                      <span className="font-bold text-emerald-300">
                         {item.status}
                       </span>
                     </div>
@@ -1471,7 +1570,7 @@ function DashboardPage() {
                 <h1 className="text-2xl font-bold text-white">
                   Account Settings
                 </h1>
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-slate-300">
                   Manage your profile details, login password, and active
                   session.
                 </p>
@@ -1480,24 +1579,24 @@ function DashboardPage() {
               <div className="grid gap-6 lg:grid-cols-2">
                 <form
                   onSubmit={handleUpdateProfile}
-                  className="space-y-4 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6"
+                  className="space-y-4 rounded-2xl border border-slate-700/80 bg-[#142B4A] p-6"
                 >
                   <h2 className="text-sm font-bold text-white">
                     Profile Information
                   </h2>
                   <div>
-                    <label className="block text-xs text-zinc-400">
+                    <label className="block text-xs text-slate-300">
                       Email Address
                     </label>
                     <input
                       type="email"
                       disabled
                       value={user?.email || ""}
-                      className="mt-1.5 w-full rounded-xl border border-white/[0.06] bg-[#06070a] px-3.5 py-2.5 text-xs text-zinc-400"
+                      className="mt-1.5 w-full rounded-xl border border-slate-700 bg-[#0c192c] px-3.5 py-2.5 text-xs text-slate-400"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-zinc-400">
+                    <label className="block text-xs text-slate-300">
                       Display Name
                     </label>
                     <input
@@ -1505,13 +1604,13 @@ function DashboardPage() {
                       value={fullNameInput}
                       onChange={(e) => setFullNameInput(e.target.value)}
                       placeholder={displayName}
-                      className="mt-1.5 w-full rounded-xl border border-white/[0.08] bg-[#06070a] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-cyan-500/60 focus:outline-none"
+                      className="mt-1.5 w-full rounded-xl border border-slate-700 bg-[#0c192c] px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={savingSettings}
-                    className="rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-6 py-2.5 text-xs font-bold text-white shadow-[0_0_18px_rgba(6,182,212,0.4)] hover:opacity-95 disabled:opacity-60"
+                    className="rounded-full bg-[#10B981] px-6 py-2.5 text-xs font-bold text-[#0c192c] transition hover:bg-emerald-400 disabled:opacity-60"
                   >
                     {savingSettings ? "Saving..." : "Save Profile"}
                   </button>
@@ -1519,36 +1618,36 @@ function DashboardPage() {
 
                 <form
                   onSubmit={handleUpdatePassword}
-                  className="space-y-4 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6"
+                  className="space-y-4 rounded-2xl border border-slate-700/80 bg-[#142B4A] p-6"
                 >
                   <h2 className="text-sm font-bold text-white">
                     Change Password
                   </h2>
                   <div>
-                    <label className="block text-xs text-zinc-400">
+                    <label className="block text-xs text-slate-300">
                       New Password
                     </label>
                     <input
                       type="password"
                       value={newPasswordInput}
                       onChange={(e) => setNewPasswordInput(e.target.value)}
-                      placeholder="Minimum 6 characters"
-                      className="mt-1.5 w-full rounded-xl border border-white/[0.08] bg-[#06070a] px-3.5 py-2.5 text-xs text-white placeholder-zinc-500 focus:border-cyan-500/60 focus:outline-none"
+                      placeholder="Minimum 8 characters"
+                      className="mt-1.5 w-full rounded-xl border border-slate-700 bg-[#0c192c] px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:border-emerald-400 focus:outline-none"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={savingSettings}
-                    className="rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-6 py-2.5 text-xs font-bold text-white shadow-[0_0_18px_rgba(6,182,212,0.4)] hover:opacity-95 disabled:opacity-60"
+                    className="rounded-full bg-[#10B981] px-6 py-2.5 text-xs font-bold text-[#0c192c] transition hover:bg-emerald-400 disabled:opacity-60"
                   >
                     Update Password
                   </button>
 
-                  <div className="border-t border-white/[0.06] pt-4">
+                  <div className="border-t border-slate-700/80 pt-4">
                     <button
                       type="button"
                       onClick={handleSignOut}
-                      className="inline-flex items-center gap-2 rounded-full border border-rose-500/30 bg-rose-950/25 px-4 py-2 text-xs font-bold text-rose-300 hover:bg-rose-950/50"
+                      className="inline-flex items-center gap-2 rounded-full border border-rose-500/35 bg-rose-950/30 px-4 py-2 text-xs font-bold text-rose-200 hover:bg-rose-950/50"
                     >
                       <LogOut className="h-3.5 w-3.5" /> Sign Out of Account
                     </button>
@@ -1565,32 +1664,53 @@ function DashboardPage() {
                 <h1 className="text-2xl font-bold text-white">
                   Support Center
                 </h1>
-                <p className="text-xs text-zinc-400">
-                  Fast human support for VPN setup, OTP numbers, and orders.
+                <p className="text-xs text-slate-300">
+                  Contact us for VPN setup assistance, virtual numbers, or
+                  billing questions.
                 </p>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500/40">
-                  <Mail className="h-5 w-5 text-cyan-400" />
+                <div className="space-y-2 rounded-2xl border border-slate-700/80 bg-[#142B4A] p-6">
+                  <Mail className="h-5 w-5 text-emerald-400" />
                   <h3 className="text-sm font-bold text-white">
                     Email Support
                   </h3>
-                  <p className="text-xs text-zinc-400">
-                    Reach our team anytime at{" "}
-                    <span className="text-cyan-400">
-                      support@espritaccess.com
-                    </span>
+                  <p className="text-xs text-slate-300">
+                    Reach our team at{" "}
+                    <a
+                      href={`mailto:${SUPPORT_EMAIL}`}
+                      className="text-emerald-400 underline"
+                    >
+                      {SUPPORT_EMAIL}
+                    </a>
                     .
                   </p>
                 </div>
-                <div className="space-y-2 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40">
+                <div className="space-y-2 rounded-2xl border border-slate-700/80 bg-[#142B4A] p-6">
                   <HelpCircle className="h-5 w-5 text-emerald-400" />
                   <h3 className="text-sm font-bold text-white">
-                    Live WhatsApp Desk
+                    Setup &amp; Policies
                   </h3>
-                  <p className="text-xs text-zinc-400">
-                    Need instant activation help? Tap the green support icon at
-                    the bottom-right corner.
+                  <p className="text-xs text-slate-300">
+                    Review the{" "}
+                    <Link
+                      to="/setup-guide"
+                      className="text-emerald-400 underline"
+                    >
+                      VPN Setup Guide
+                    </Link>
+                    ,{" "}
+                    <Link
+                      to="/refund-policy"
+                      className="text-emerald-400 underline"
+                    >
+                      Refund Policy
+                    </Link>
+                    , or{" "}
+                    <Link to="/terms" className="text-emerald-400 underline">
+                      Terms of Service
+                    </Link>
+                    .
                   </p>
                 </div>
               </div>
@@ -1599,31 +1719,30 @@ function DashboardPage() {
 
           {/* REFERRAL PROGRAM TAB */}
           {activeTab === "referrals" && (
-            <div className="space-y-4 rounded-2xl border border-cyan-500/20 bg-[#0d1017] p-6 shadow-[0_0_25px_rgba(6,182,212,0.1)]">
-              <div className="flex items-center gap-2 text-cyan-400">
+            <div className="space-y-4 rounded-2xl border border-slate-700/80 bg-[#142B4A] p-6">
+              <div className="flex items-center gap-2 text-emerald-400">
                 <Users className="h-5 w-5" />
                 <h2 className="text-lg font-bold text-white">
-                  Invite Friends, Earn ₦500
+                  Referral Program
                 </h2>
               </div>
-              <p className="text-xs text-zinc-400">
-                Share your personal EspritAccess link. You earn ₦500 in wallet
-                credit for every friend who activates a VPN plan.
+              <p className="text-xs text-slate-300">
+                Share your personal EspritAccess referral link with friends.
               </p>
-              <div className="flex items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-[#06070a] px-4 py-3 font-mono text-xs text-cyan-300">
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-700 bg-[#0c192c] px-4 py-3 font-mono text-xs text-emerald-300">
                 <span className="truncate">
                   {`https://www.espritaccess.com.ng/auth?ref=${user?.id.slice(0, 8)}`}
                 </span>
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(
+                    void navigator.clipboard.writeText(
                       `https://www.espritaccess.com.ng/auth?ref=${user?.id.slice(0, 8)}`
                     );
                     setCopiedRef(true);
                     setTimeout(() => setCopiedRef(false), 2000);
                   }}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 px-3.5 py-1.5 font-sans text-xs font-semibold text-white"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#10B981] px-3.5 py-1.5 font-sans text-xs font-bold text-[#0c192c]"
                 >
                   {copiedRef ? (
                     <Check className="h-3.5 w-3.5" />
@@ -1638,25 +1757,24 @@ function DashboardPage() {
 
           {/* NOTIFICATIONS TAB */}
           {activeTab === "notifications" && (
-            <div className="space-y-4 rounded-2xl border border-white/[0.06] bg-[#0d1017] p-6">
+            <div className="space-y-4 rounded-2xl border border-slate-700/80 bg-[#142B4A] p-6">
               <h2 className="text-lg font-bold text-white">Notifications</h2>
               <div className="space-y-3">
-                <div className="rounded-xl border border-white/[0.06] bg-[#06070a] p-4">
+                <div className="rounded-xl border border-slate-700 bg-[#0c192c] p-4">
                   <p className="text-xs font-bold text-white">
-                    Welcome to EspritAccess 🎉
+                    Welcome to EspritAccess
                   </p>
-                  <p className="mt-1 text-xs text-zinc-400">
-                    Your account is verified. Browse VPN Plans, Virtual SMS, or
-                    E-books to get started.
+                  <p className="mt-1 text-xs text-slate-300">
+                    Your account is active. Explore My VPN, Subscriptions,
+                    Virtual SMS, or Digital Products.
                   </p>
                 </div>
-                <div className="rounded-xl border border-white/[0.06] bg-[#06070a] p-4">
+                <div className="rounded-xl border border-slate-700 bg-[#0c192c] p-4">
                   <p className="text-xs font-bold text-white">
                     Paystack NGN Checkout Ready
                   </p>
-                  <p className="mt-1 text-xs text-zinc-400">
-                    Instant activation is active for cards, bank transfers, and
-                    USSD.
+                  <p className="mt-1 text-xs text-slate-300">
+                    NGN checkout is configured for supported payment methods.
                   </p>
                 </div>
               </div>
