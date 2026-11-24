@@ -36,12 +36,11 @@ import {
   KeyRound,
   Zap,
   Globe,
-  Crown,
   ArrowRight,
   Mail,
   Sparkles,
   ExternalLink,
-  MoreHorizontal,
+  Menu,
   X,
   MessageCircle,
   Activity,
@@ -756,143 +755,152 @@ function DashboardPage() {
       {/* Deep Obsidian Navy Ambient Emerald & Warm Amber Glow */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(0,245,155,0.09),transparent_40%),radial-gradient(circle_at_88%_25%,rgba(245,158,11,0.06),transparent_38%),radial-gradient(circle_at_50%_92%,rgba(16,185,129,0.07),transparent_44%)]" />
 
-      {/* Clean Non-Sticky Top Bar (No cluttered pill strip or sticky scroll bar) */}
-      <header className="relative z-30 mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 pt-4 pb-2 sm:px-6">
-        <Link to="/" className="group flex shrink-0 items-center gap-2.5">
-          <img
-            src="/logo-mark.png"
-            alt="EspritAccess"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-            className="h-9 w-9 rounded-xl border border-white/10 shadow-[0_0_20px_rgba(0,245,155,0.22)] transition-transform group-hover:scale-105"
-          />
-          <span className="hidden text-base font-extrabold tracking-tight text-white sm:inline">
-            Esprit<span className="text-[#00F59B]">Access</span>
-          </span>
-        </Link>
+      {/* Top Navigation Bar with Three-Line Hamburger Menu at the Top */}
+      <header className="relative z-40 mx-auto w-full max-w-6xl px-4 pt-4 pb-2 sm:px-6">
+        <div className="relative flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-[#081020]/90 px-3.5 py-2.5 shadow-[0_14px_40px_rgba(0,0,0,0.75)] backdrop-blur-xl sm:px-4">
+          {/* Left: Top Hamburger Button + Brand */}
+          <div className="flex shrink-0 items-center gap-2.5">
+            <button
+              type="button"
+              aria-label="Toggle Navigation Menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((prev) => !prev)}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-[#050A15] text-slate-100 transition hover:border-[#00F59B]/45 hover:text-[#00F59B]"
+            >
+              {menuOpen ? (
+                <X className="h-5 w-5 text-amber-400" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </button>
 
-        <div className="relative min-w-0 max-w-md flex-1">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search VPN, SMS numbers, e-books..."
-            className="w-full rounded-full border border-white/[0.08] bg-[#081020]/90 py-2 pl-10 pr-4 text-xs text-white placeholder-slate-500 transition focus:border-[#00F59B]/50 focus:shadow-[0_0_20px_rgba(0,245,155,0.14)] focus:outline-none"
-          />
-        </div>
+            <Link to="/" className="group flex items-center gap-2">
+              <img
+                src="/logo-mark.png"
+                alt="EspritAccess"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+                className="h-8 w-8 rounded-lg border border-white/10"
+              />
+              <span className="hidden text-base font-extrabold tracking-tight text-white sm:inline">
+                Esprit<span className="text-[#00F59B]">Access</span>
+              </span>
+            </Link>
+          </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            aria-label="Notifications"
-            onClick={() => selectTab("notifications")}
-            className="relative rounded-full border border-white/[0.08] bg-[#081020]/90 p-2 text-slate-200 transition hover:border-amber-400/40"
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-orange-500" />
-          </button>
+          {/* Center: Search */}
+          <div className="relative min-w-0 max-w-md flex-1">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search VPN, SMS numbers, e-books..."
+              className="w-full rounded-full border border-white/[0.08] bg-[#050A15] py-2 pl-10 pr-4 text-xs text-white placeholder-slate-500 transition focus:border-[#00F59B]/50 focus:outline-none"
+            />
+          </div>
 
-          <button
-            type="button"
-            aria-label="Sign Out"
-            onClick={handleSignOut}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-[#081020]/90 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-rose-400/40 hover:text-white"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Sign Out</span>
-          </button>
+          {/* Right: Notifications & Sign Out */}
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              aria-label="Notifications"
+              onClick={() => selectTab("notifications")}
+              className="relative rounded-full border border-white/[0.08] bg-[#050A15] p-2 text-slate-200 transition hover:border-amber-400/40"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-orange-500" />
+            </button>
+
+            <button
+              type="button"
+              aria-label="Sign Out"
+              onClick={handleSignOut}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-[#050A15] px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-rose-400/40 hover:text-white"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
+          </div>
+
+          {/* Dropdown Menu Panel Opened From Top Hamburger */}
+          {menuOpen && (
+            <nav
+              aria-label="Dashboard Navigation"
+              className="absolute left-0 top-[calc(100%+0.6rem)] z-50 w-72 max-w-[92vw] rounded-2xl border border-white/[0.08] bg-[#070E1C]/98 p-3 shadow-[0_24px_64px_rgba(0,0,0,0.92),0_0_32px_rgba(0,245,155,0.12)] backdrop-blur-2xl"
+            >
+              <div className="mb-2 flex items-center justify-between border-b border-white/[0.07] px-2.5 pb-2">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-white">
+                  <Sparkles className="h-3.5 w-3.5 text-[#00F59B]" />
+                  {displayName}
+                </span>
+                <span className="rounded-full border border-[#00F59B]/25 bg-[#00F59B]/10 px-2 py-0.5 text-[10px] font-semibold text-[#00F59B]">
+                  Products &amp; Tools
+                </span>
+              </div>
+
+              <div className="max-h-[62vh] space-y-1 overflow-y-auto pr-0.5">
+                {NAV_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => selectTab(item.id)}
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition ${isActive
+                          ? "bg-[#00F59B] text-[#040812] shadow-[0_0_16px_rgba(0,245,155,0.25)]"
+                          : "border border-transparent text-slate-200 hover:border-white/[0.07] hover:bg-white/[0.05] hover:text-white"
+                        }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Icon
+                          className={`h-4 w-4 ${isActive ? "text-[#040812]" : item.accent
+                            }`}
+                        />
+                        <span>{item.label}</span>
+                      </span>
+                      {item.badge && (
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${isActive
+                              ? "bg-[#040812] text-[#00F59B]"
+                              : "bg-orange-500 text-white"
+                            }`}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-2.5 space-y-1.5 border-t border-white/[0.07] pt-2.5">
+                <Link
+                  to="/"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex w-full items-center justify-between rounded-xl border border-white/[0.07] bg-[#050A15] px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-[#00F59B]/35 hover:text-white"
+                >
+                  <span>Main Website</span>
+                  <ExternalLink className="h-3.5 w-3.5 text-[#00F59B]" />
+                </Link>
+
+                <a
+                  href="https://wa.me/2348051309239?text=Hello%20EspritAccess%2C%20I%20need%20help%20with%20my%20dashboard."
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00F59B] to-emerald-400 px-3 py-2.5 text-xs font-bold text-[#040812] shadow-[0_0_20px_rgba(0,245,155,0.25)] transition hover:opacity-95"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp Support
+                </a>
+              </div>
+            </nav>
+          )}
         </div>
       </header>
-
-      {/* Floating Three Horizontal Dots Menu on the Side */}
-      <div className="fixed right-3.5 top-1/2 z-50 flex -translate-y-1/2 flex-col items-end">
-        <button
-          type="button"
-          aria-label="Open Dashboard Menu"
-          onClick={() => setMenuOpen((prev) => !prev)}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-[#00F59B]/35 bg-[#070E1C]/92 text-[#00F59B] shadow-[0_0_26px_rgba(0,245,155,0.28)] backdrop-blur-xl transition-all hover:scale-105 hover:border-[#00F59B]"
-        >
-          {menuOpen ? (
-            <X className="h-5 w-5 text-amber-400" />
-          ) : (
-            <MoreHorizontal className="h-5 w-5" />
-          )}
-        </button>
-
-        {menuOpen && (
-          <nav className="mt-3 max-h-[78vh] w-64 overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#070E1C]/96 p-2.5 shadow-[0_24px_64px_rgba(0,0,0,0.9),0_0_32px_rgba(0,245,155,0.14)] backdrop-blur-2xl">
-            <div className="mb-1.5 flex items-center justify-between border-b border-white/[0.07] px-3 py-2">
-              <span className="flex items-center gap-1.5 text-xs font-bold text-white">
-                <Sparkles className="h-3.5 w-3.5 text-[#00F59B]" />
-                {displayName}
-              </span>
-              <span className="rounded-full border border-amber-400/25 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
-                Menu
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => selectTab(item.id)}
-                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${isActive
-                        ? "bg-[#00F59B] text-[#040812] shadow-[0_0_16px_rgba(0,245,155,0.25)]"
-                        : "border border-transparent text-slate-200 hover:border-white/[0.07] hover:bg-white/[0.05] hover:text-white"
-                      }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Icon
-                        className={`h-4 w-4 ${isActive ? "text-[#040812]" : item.accent
-                          }`}
-                      />
-                      <span>{item.label}</span>
-                    </span>
-                    {item.badge && (
-                      <span
-                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${isActive
-                            ? "bg-[#040812] text-[#00F59B]"
-                            : "bg-orange-500 text-white"
-                          }`}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-2 space-y-1.5 border-t border-white/[0.07] pt-2">
-              <Link
-                to="/"
-                onClick={() => setMenuOpen(false)}
-                className="flex w-full items-center justify-between rounded-xl border border-white/[0.07] bg-[#050A15] px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-[#00F59B]/35 hover:text-white"
-              >
-                <span>Main Website</span>
-                <ExternalLink className="h-3.5 w-3.5 text-[#00F59B]" />
-              </Link>
-
-              <a
-                href="https://wa.me/2348051309239?text=Hello%20EspritAccess%2C%20I%20need%20help%20with%20my%20dashboard."
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => setMenuOpen(false)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00F59B] to-emerald-400 px-3 py-2.5 text-xs font-bold text-[#040812] shadow-[0_0_20px_rgba(0,245,155,0.25)] transition hover:opacity-95"
-              >
-                <MessageCircle className="h-4 w-4" />
-                WhatsApp Support
-              </a>
-            </div>
-          </nav>
-        )}
-      </div>
 
       {/* Main Content Container */}
       <main className="relative z-10 mx-auto w-full max-w-6xl space-y-6 px-4 pb-20 pt-4 sm:px-6">
@@ -1174,7 +1182,7 @@ function DashboardPage() {
 
                   {activeKey ? (
                     <div className="mt-4 space-y-3">
-                      <div className="rounded-2xl border border-[#00F59B]/25 bg-[#050A15] p-3.5 font-mono text-xs text-[#00F59B] break-all">
+                      <div className="break-all rounded-2xl border border-[#00F59B]/25 bg-[#050A15] p-3.5 font-mono text-xs text-[#00F59B]">
                         {activeKey}
                       </div>
                       <button
@@ -1269,7 +1277,7 @@ function DashboardPage() {
                   <p className="text-xs font-semibold text-slate-300">
                     Active Access Key ({currentPlanName})
                   </p>
-                  <div className="rounded-xl border border-white/[0.08] bg-[#040812] p-4 font-mono text-xs text-[#00F59B] break-all">
+                  <div className="break-all rounded-xl border border-white/[0.08] bg-[#040812] p-4 font-mono text-xs text-[#00F59B]">
                     {activeKey}
                   </div>
                   <div className="flex flex-wrap gap-3">
@@ -1564,7 +1572,7 @@ function DashboardPage() {
                   Generated 16-Character Password
                 </p>
                 <div className="mt-2.5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#00F59B]/25 bg-[#040812] px-4 py-3">
-                  <span className="font-mono text-sm font-bold text-[#00F59B] break-all">
+                  <span className="break-all font-mono text-sm font-bold text-[#00F59B]">
                     {generatedPass}
                   </span>
                   <div className="flex items-center gap-2">
@@ -1830,8 +1838,8 @@ function DashboardPage() {
                   Instant WhatsApp Support Available
                 </p>
                 <p className="mt-1 text-xs text-slate-300">
-                  Use the floating three-dot menu on the right edge to jump to
-                  any tool or message support directly.
+                  Tap the menu button at the top left to jump to any product,
+                  tool, or support channel.
                 </p>
               </div>
             </div>
