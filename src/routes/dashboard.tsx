@@ -77,9 +77,12 @@ interface OrderRecord {
   id: string;
   plan_name?: string;
   plan_code?: string;
+  plan_type?: string;
   amount_ngn?: number;
   status?: string;
+  payment_status?: string;
   reference?: string;
+  reference_id?: string;
   vpn_key?: string;
   created_at?: string;
 }
@@ -99,6 +102,11 @@ interface PaystackInlineClient {
 function getPaystackInline(): PaystackInlineClient | undefined {
   return (window as unknown as { PaystackPop?: PaystackInlineClient })
     .PaystackPop;
+}
+
+function parsePriceNgn(priceDisplay: string): number {
+  const digits = priceDisplay.replace(/[^\d]/g, "");
+  return Number(digits) || 0;
 }
 
 function ScrollFloat({
@@ -539,7 +547,7 @@ function DashboardPage() {
       await fetchOrders(data.user.id);
       if (mounted) setLoading(false);
     }
-    init();
+    void init();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_e, session) => {
@@ -597,9 +605,11 @@ function DashboardPage() {
     setStatusMessage(error ? error.message : "Password updated successfully.");
   }
 
-  async function triggerTestBypassOrder(planCode = "standard") {
+  async function triggerTestBypassOrder(
+    plan_type: "standard" | "plus" | "pro" | "monthly" | "yearly" = "standard"
+  ) {
     if (!user?.email) return;
-    const testCode = `test-bypass-${planCode}`;
+    const testCode = `test-bypass-${plan_type}`;
     setPayingCode(testCode);
     setStatusMessage(null);
     const testRef = `TEST_${Date.now()}`;
@@ -609,23 +619,19 @@ function DashboardPage() {
         finalizePaystackOrder as (args: {
           data: {
             reference: string;
-            planCode: string;
-            userId: string;
-            email: string;
+            plan_type: "standard" | "plus" | "pro" | "monthly" | "yearly";
           };
         }) => Promise<unknown>
       )({
         data: {
           reference: testRef,
-          planCode,
-          userId: user.id,
-          email: user.email,
+          plan_type,
         },
       });
       console.log("TEST order result:", result);
       await fetchOrders(user.id);
       setStatusMessage(
-        `Test bypass order (${testRef}) finalized for ${planCode}. Orders refreshed.`
+        `Test bypass order (${testRef}) finalized for ${plan_type}. Orders refreshed.`
       );
     } catch (err: unknown) {
       const detail =
@@ -653,6 +659,19 @@ function DashboardPage() {
       return;
     }
 
+    const validPlanTypes = [
+      "standard",
+      "plus",
+      "pro",
+      "monthly",
+      "yearly",
+    ] as const;
+    const resolvedPlanType: (typeof validPlanTypes)[number] = (
+      validPlanTypes as readonly string[]
+    ).includes(code)
+      ? (code as (typeof validPlanTypes)[number])
+      : "standard";
+
     try {
       await ensurePaystackScript();
       const PaystackPop = getPaystackInline();
@@ -678,17 +697,18 @@ function DashboardPage() {
                 finalizePaystackOrder as (args: {
                   data: {
                     reference: string;
-                    planCode: string;
-                    userId: string;
-                    email: string;
+                    plan_type:
+                    | "standard"
+                    | "plus"
+                    | "pro"
+                    | "monthly"
+                    | "yearly";
                   };
                 }) => Promise<unknown>
               )({
                 data: {
                   reference: response.reference,
-                  planCode: code,
-                  userId: user.id,
-                  email: user.email!,
+                  plan_type: resolvedPlanType,
                 },
               });
               setStatusMessage(
@@ -757,7 +777,9 @@ function DashboardPage() {
     0
   );
   const currentPlanName =
-    latestKeyOrder?.plan_name || (activeKey ? "Pro Plan" : "No Active Plan");
+    latestKeyOrder?.plan_name ||
+    latestKeyOrder?.plan_type ||
+    (activeKey ? "Pro Plan" : "No Active Plan");
   const referralCode = `EA-${(user?.id || "MEMBER").slice(0, 6).toUpperCase()}`;
 
   const filteredBooks = DIGITAL_PRODUCTS.filter((b) => {
@@ -857,7 +879,7 @@ function DashboardPage() {
             <button
               type="button"
               aria-label="Sign Out"
-              onClick={handleSignOut}
+              onClick={() => void handleSignOut()}
               className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-[#050A15] px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-rose-400/40 hover:text-white"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -1414,31 +1436,30 @@ function DashboardPage() {
 
               <div className="grid gap-5 md:grid-cols-3">
                 {PRICING_PLANS.map((plan) => {
-                  const amountNgn = plan.amountNgn;
+                  const amountNgn = parsePriceNgn(plan.priceDisplay);
+                  const isFeatured = plan.id === "plus";
                   return (
                     <div
-                      key={plan.code}
-                      className={`flex flex-col justify-between rounded-3xl border p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)] ${plan.highlighted
+                      key={plan.id}
+                      className={`flex flex-col justify-between rounded-3xl border p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)] ${isFeatured
                           ? "border-[#00F59B]/45 bg-gradient-to-b from-[#0D1D34] to-[#060B16]"
                           : "border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95"
                         }`}
                     >
                       <div>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <h3 className="text-lg font-extrabold text-white">
                             {plan.name}
                           </h3>
-                          {plan.badge && (
-                            <span className="rounded-full bg-[#00F59B]/15 px-2.5 py-0.5 text-[10px] font-bold text-[#00F59B]">
-                              {plan.badge}
-                            </span>
-                          )}
+                          <span className="rounded-full bg-[#00F59B]/15 px-2.5 py-0.5 text-[10px] font-bold text-[#00F59B]">
+                            {plan.billingPeriod}
+                          </span>
                         </div>
                         <p className="mt-3 text-2xl font-extrabold text-white">
                           {plan.priceDisplay}
                         </p>
                         <p className="mt-1 text-xs text-slate-400">
-                          {plan.billingNote}
+                          {plan.billingLabel}
                         </p>
                         <p className="mt-3 text-xs text-slate-300">
                           {plan.summary}
@@ -1454,18 +1475,23 @@ function DashboardPage() {
                         </ul>
                       </div>
 
-                      <button
-                        type="button"
-                        disabled={payingCode === plan.code}
-                        onClick={() =>
-                          void handleCheckout(plan.code, plan.name, amountNgn)
-                        }
-                        className="mt-6 w-full rounded-xl bg-[#00F59B] py-2.5 text-xs font-bold text-[#040812] transition hover:opacity-95 disabled:opacity-50"
-                      >
-                        {payingCode === plan.code
-                          ? "Launching Paystack..."
-                          : plan.ctaLabel}
-                      </button>
+                      <div className="mt-6">
+                        <p className="mb-3 text-[11px] text-slate-400">
+                          {plan.preCheckoutNote}
+                        </p>
+                        <button
+                          type="button"
+                          disabled={payingCode === plan.id}
+                          onClick={() =>
+                            void handleCheckout(plan.id, plan.name, amountNgn)
+                          }
+                          className="w-full rounded-xl bg-[#00F59B] py-2.5 text-xs font-bold text-[#040812] transition hover:opacity-95 disabled:opacity-50"
+                        >
+                          {payingCode === plan.id
+                            ? "Launching Paystack..."
+                            : `Select ${plan.name}`}
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -1671,17 +1697,22 @@ function DashboardPage() {
                       {orders.map((order) => (
                         <tr key={order.id} className="text-slate-200">
                           <td className="py-3 pr-4 font-mono text-[11px]">
-                            {order.reference || order.id}
+                            {order.reference || order.reference_id || order.id}
                           </td>
                           <td className="py-3 pr-4 font-semibold">
-                            {order.plan_name || order.plan_code || "Order"}
+                            {order.plan_name ||
+                              order.plan_type ||
+                              order.plan_code ||
+                              "Order"}
                           </td>
                           <td className="py-3 pr-4">
                             ₦{(Number(order.amount_ngn) || 0).toLocaleString()}
                           </td>
                           <td className="py-3">
                             <span className="rounded-full bg-[#00F59B]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#00F59B]">
-                              {order.status || "completed"}
+                              {order.status ||
+                                order.payment_status ||
+                                "completed"}
                             </span>
                           </td>
                         </tr>
