@@ -7,6 +7,7 @@ import {
   Check,
   KeyRound,
   Copy,
+  Download,
   Phone,
   BookOpen,
 } from "lucide-react";
@@ -55,6 +56,7 @@ type MyKey = {
   reference_id: string | null;
   created_at: string;
   api_key_or_config: string | null;
+  expires_at?: string | null;
 };
 
 export function StoreTab({ user }: { user: User }) {
@@ -76,6 +78,22 @@ export function StoreTab({ user }: { user: User }) {
   useEffect(() => {
     void refresh();
   }, []);
+
+  function downloadConfFile(configText: string, planType: string) {
+    const cleanPlan = planType.toLowerCase().replace(/[^a-z0-9-_]/g, "") || "vpn";
+    const blob = new Blob([configText], {
+      type: "text/plain;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `espritaccess-${cleanPlan}.conf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded espritaccess-${cleanPlan}.conf`);
+  }
 
   async function purchase(
     plan: "monthly" | "yearly",
@@ -182,8 +200,8 @@ export function StoreTab({ user }: { user: User }) {
             <div
               key={plan.id}
               className={`relative flex flex-col overflow-hidden rounded-2xl border p-6 shadow-[var(--shadow-panel)] ${plan.highlight
-                  ? "border-primary/60 bg-card"
-                  : "border-border bg-card"
+                ? "border-primary/60 bg-card"
+                : "border-border bg-card"
                 }`}
             >
               {plan.highlight && (
@@ -293,38 +311,62 @@ export function StoreTab({ user }: { user: User }) {
                       Paid
                     </Badge>
                   </div>
+                  <div className="flex items-center gap-3">
+                    {key.api_key_or_config && (
+                      <button
+                        type="button"
+                        className="flex items-center gap-1 text-xs text-primary hover:opacity-80"
+                        onClick={() =>
+                          downloadConfFile(
+                            key.api_key_or_config!,
+                            key.plan_type,
+                          )
+                        }
+                      >
+                        <Download className="h-3 w-3" />
+                        Download .conf
+                      </button>
+                    )}
 
-                  <button
-                    className="flex items-center gap-1 text-xs text-primary hover:opacity-80"
-                    onClick={async () => {
-                      if (!key.api_key_or_config) {
-                        toast.error("VPN configuration is not available yet");
-                        return;
-                      }
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-xs text-primary hover:opacity-80"
+                      onClick={async () => {
+                        if (!key.api_key_or_config) {
+                          toast.error("VPN configuration is not available yet");
+                          return;
+                        }
 
-                      try {
-                        await navigator.clipboard.writeText(
-                          key.api_key_or_config,
-                        );
+                        try {
+                          await navigator.clipboard.writeText(
+                            key.api_key_or_config,
+                          );
 
-                        toast.success("Copied to clipboard");
-                      } catch {
-                        toast.error("Unable to copy configuration");
-                      }
-                    }}
-                  >
-                    <Copy className="h-3 w-3" />
-                    Copy
-                  </button>
+                          toast.success("Copied to clipboard");
+                        } catch {
+                          toast.error("Unable to copy configuration");
+                        }
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                      Copy
+                    </button>
+                  </div>
                 </div>
 
                 <code className="block break-all rounded-md bg-secondary p-3 text-xs text-foreground/80">
                   {key.api_key_or_config ?? "Pending allocation..."}
                 </code>
 
-                <p className="mt-1 text-[11px] text-foreground/40">
-                  Ref: {key.reference_id}
-                </p>
+                <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-foreground/40">
+                  <span>Ref: {key.reference_id}</span>
+                  {key.expires_at && (
+                    <span>
+                      Expires: {new Date(key.expires_at).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+
               </div>
             ))}
           </div>
