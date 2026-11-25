@@ -9,7 +9,11 @@ import {
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { PAYSTACK_PUBLIC_KEY, generateReference } from "@/lib/paystack";
-import { finalizePaystackOrder } from "@/lib/paystack.functions";
+import {
+  finalizePaystackOrder,
+  listMyKeys,
+  type VpnPlanType,
+} from "@/lib/paystack.functions";
 import {
   PRICING_PLANS,
   SUPPORT_EMAIL,
@@ -65,6 +69,8 @@ type TabKey =
   | "referrals"
   | "notifications";
 
+type BillingCycle = "monthly" | "yearly";
+
 type BookNiche =
   | "All"
   | "Finance"
@@ -85,6 +91,15 @@ interface OrderRecord {
   reference_id?: string;
   vpn_key?: string;
   created_at?: string;
+}
+
+interface AssignedKeyRecord {
+  id: string;
+  plan_type: string;
+  reference_id: string | null;
+  created_at: string;
+  api_key_or_config: string | null;
+  expires_at: string | null;
 }
 
 interface PaystackInlineClient {
@@ -108,6 +123,72 @@ function parsePriceNgn(priceDisplay: string): number {
   const digits = priceDisplay.replace(/[^\d]/g, "");
   return Number(digits) || 0;
 }
+
+const PLAN_LABELS: Record<string, string> = {
+  standard_monthly: "Standard (Monthly)",
+  plus_monthly: "Plus (Monthly)",
+  pro_monthly: "Pro (Monthly)",
+  standard_yearly: "Standard (Yearly)",
+  plus_yearly: "Plus (Yearly)",
+  pro_yearly: "Pro (Yearly)",
+};
+
+const YEARLY_PRICING_PLANS = [
+  {
+    id: "standard",
+    planType: "standard_yearly" as VpnPlanType,
+    name: "Standard",
+    priceNgn: 39990,
+    priceDisplay: "₦39,990",
+    billingPeriod: "Yearly (365 Days)",
+    billingLabel: "Billed once per year · Save 2 months",
+    summary:
+      "Full-year encrypted WireGuard access for everyday browsing and stable private connections.",
+    features: [
+      "12 months private WireGuard VPN access",
+      "Residential-grade encrypted tunnel",
+      "Android, iOS & Windows setup support",
+      "Priority email & WhatsApp assistance",
+    ],
+    preCheckoutNote: "Instant WireGuard config delivery upon payment.",
+  },
+  {
+    id: "plus",
+    planType: "plus_yearly" as VpnPlanType,
+    name: "Plus",
+    priceNgn: 69990,
+    priceDisplay: "₦69,990",
+    billingPeriod: "Yearly (365 Days)",
+    billingLabel: "Billed once per year · Most Popular",
+    summary:
+      "High-speed annual VPN protection built for heavy streaming, remote work, and multi-session stability.",
+    features: [
+      "12 months high-speed WireGuard access",
+      "Enhanced low-latency routing",
+      "Android, iOS & Windows support",
+      "Fast key replacement & priority support",
+    ],
+    preCheckoutNote: "Instant WireGuard config delivery upon payment.",
+  },
+  {
+    id: "pro",
+    planType: "pro_yearly" as VpnPlanType,
+    name: "Pro",
+    priceNgn: 99990,
+    priceDisplay: "₦99,990",
+    billingPeriod: "Yearly (365 Days)",
+    billingLabel: "Billed once per year · Maximum Tier",
+    summary:
+      "Top-tier annual bandwidth and dedicated priority support for power users and business workflows.",
+    features: [
+      "12 months maximum-priority WireGuard access",
+      "Dedicated high-throughput residential route",
+      "All platforms supported (Android, iOS, Windows)",
+      "Direct 1-on-1 WhatsApp onboarding support",
+    ],
+    preCheckoutNote: "Instant WireGuard config delivery upon payment.",
+  },
+];
 
 function ScrollFloat({
   children,
@@ -144,8 +225,8 @@ function ScrollFloat({
       ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
       className={`transform transition-all duration-700 ease-out ${visible
-          ? "translate-y-0 scale-100 opacity-100"
-          : "translate-y-6 scale-[0.99] opacity-0"
+        ? "translate-y-0 scale-100 opacity-100"
+        : "translate-y-6 scale-[0.99] opacity-0"
         } ${className}`}
     >
       {children}
@@ -517,8 +598,10 @@ function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [menuOpen, setMenuOpen] = useState(false);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [assignedKeys, setAssignedKeys] = useState<AssignedKeyRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [payingCode, setPayingCode] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -571,6 +654,17 @@ function DashboardPage() {
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
     if (!error && data) setOrders(data as OrderRecord[]);
+
+    try {
+      const keys = (await (
+        listMyKeys as () => Promise<AssignedKeyRecord[]>
+      )()) as AssignedKeyRecord[];
+      if (Array.isArray(keys)) {
+        setAssignedKeys(keys);
+      }
+    } catch {
+      // Fallback to orders state if listMyKeys fails
+    }
   }
 
   function handleGeneratePassword() {
@@ -606,7 +700,7 @@ function DashboardPage() {
   }
 
   async function triggerTestBypassOrder(
-    plan_type: "standard" | "plus" | "pro" | "monthly" | "yearly" = "standard"
+    plan_type: VpnPlanType = "standard_monthly"
   ) {
     if (!user?.email) return;
     const testCode = `test-bypass-${plan_type}`;
@@ -619,7 +713,7 @@ function DashboardPage() {
         finalizePaystackOrder as (args: {
           data: {
             reference: string;
-            plan_type: "standard" | "plus" | "pro" | "monthly" | "yearly";
+            plan_type: VpnPlanType;
           };
         }) => Promise<unknown>
       )({
@@ -631,7 +725,8 @@ function DashboardPage() {
       console.log("TEST order result:", result);
       await fetchOrders(user.id);
       setStatusMessage(
-        `Test bypass order (${testRef}) finalized for ${plan_type}. Orders refreshed.`
+        `Test bypass order (${testRef}) finalized for ${PLAN_LABELS[plan_type] || plan_type
+        }. Orders refreshed.`
       );
     } catch (err: unknown) {
       const detail =
@@ -643,9 +738,13 @@ function DashboardPage() {
     }
   }
 
-  async function handleCheckout(code: string, name: string, price: number) {
+  async function handleCheckout(
+    planType: VpnPlanType,
+    name: string,
+    price: number
+  ) {
     if (!user?.email) return;
-    setPayingCode(code);
+    setPayingCode(planType);
     setStatusMessage(null);
 
     const publicKey =
@@ -658,19 +757,6 @@ function DashboardPage() {
       setPayingCode(null);
       return;
     }
-
-    const validPlanTypes = [
-      "standard",
-      "plus",
-      "pro",
-      "monthly",
-      "yearly",
-    ] as const;
-    const resolvedPlanType: (typeof validPlanTypes)[number] = (
-      validPlanTypes as readonly string[]
-    ).includes(code)
-      ? (code as (typeof validPlanTypes)[number])
-      : "standard";
 
     try {
       await ensurePaystackScript();
@@ -697,25 +783,20 @@ function DashboardPage() {
                 finalizePaystackOrder as (args: {
                   data: {
                     reference: string;
-                    plan_type:
-                    | "standard"
-                    | "plus"
-                    | "pro"
-                    | "monthly"
-                    | "yearly";
+                    plan_type: VpnPlanType;
                   };
                 }) => Promise<unknown>
               )({
                 data: {
                   reference: response.reference,
-                  plan_type: resolvedPlanType,
+                  plan_type: planType,
                 },
               });
               setStatusMessage(
-                `Payment confirmed for ${name}. Your account records have been refreshed.`
+                `Payment confirmed for ${name}. Your WireGuard configuration has been assigned.`
               );
               await fetchOrders(user.id);
-              setActiveTab("dashboard");
+              setActiveTab("vpn");
             } catch (finalizeErr: unknown) {
               const detail =
                 finalizeErr instanceof Error
@@ -766,8 +847,12 @@ function DashboardPage() {
     (user?.user_metadata?.full_name as string | undefined) ||
     user?.email?.split("@")[0] ||
     "Member";
+
+  const latestAssignedKey = assignedKeys.find((k) => k.api_key_or_config);
   const latestKeyOrder = orders.find((o) => o.vpn_key);
-  const activeKey = latestKeyOrder?.vpn_key || null;
+  const activeKey =
+    latestAssignedKey?.api_key_or_config || latestKeyOrder?.vpn_key || null;
+  const activeExpiresAt = latestAssignedKey?.expires_at || null;
   const connectionStatus: ConnectionStatus = activeKey
     ? "connected"
     : "disconnected";
@@ -776,11 +861,38 @@ function DashboardPage() {
     (sum, o) => sum + (Number(o.amount_ngn) || 0),
     0
   );
-  const currentPlanName =
-    latestKeyOrder?.plan_name ||
+  const rawPlanKey =
+    latestAssignedKey?.plan_type ||
     latestKeyOrder?.plan_type ||
-    (activeKey ? "Pro Plan" : "No Active Plan");
+    latestKeyOrder?.plan_name ||
+    "";
+  const currentPlanName =
+    PLAN_LABELS[rawPlanKey] ||
+    rawPlanKey ||
+    (activeKey ? "Active VPN Plan" : "No Active Plan");
   const referralCode = `EA-${(user?.id || "MEMBER").slice(0, 6).toUpperCase()}`;
+
+  const monthlyPlans = PRICING_PLANS.map((plan) => {
+    const tier = plan.id as "standard" | "plus" | "pro";
+    return {
+      id: plan.id,
+      planType: `${tier}_monthly` as VpnPlanType,
+      name: plan.name,
+      priceNgn: parsePriceNgn(plan.priceDisplay),
+      priceDisplay: plan.priceDisplay,
+      billingPeriod: "Monthly (30 Days)",
+      billingLabel: plan.billingLabel,
+      summary: plan.summary,
+      features: plan.features,
+      preCheckoutNote: plan.preCheckoutNote,
+    };
+  });
+
+  const displayedPlans =
+    billingCycle === "monthly" ? monthlyPlans : YEARLY_PRICING_PLANS;
+
+  const activeTestPlanType: VpnPlanType =
+    billingCycle === "monthly" ? "standard_monthly" : "standard_yearly";
 
   const filteredBooks = DIGITAL_PRODUCTS.filter((b) => {
     const matchesNiche = selectedNiche === "All" || b.niche === selectedNiche;
@@ -913,8 +1025,8 @@ function DashboardPage() {
                       type="button"
                       onClick={() => selectTab(item.id)}
                       className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition ${isActive
-                          ? "bg-[#00F59B] text-[#040812] shadow-[0_0_16px_rgba(0,245,155,0.25)]"
-                          : "border border-transparent text-slate-200 hover:border-white/[0.07] hover:bg-white/[0.05] hover:text-white"
+                        ? "bg-[#00F59B] text-[#040812] shadow-[0_0_16px_rgba(0,245,155,0.25)]"
+                        : "border border-transparent text-slate-200 hover:border-white/[0.07] hover:bg-white/[0.05] hover:text-white"
                         }`}
                     >
                       <span className="flex items-center gap-2.5">
@@ -927,8 +1039,8 @@ function DashboardPage() {
                       {item.badge && (
                         <span
                           className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${isActive
-                              ? "bg-[#040812] text-[#00F59B]"
-                              : "bg-orange-500 text-white"
+                            ? "bg-[#040812] text-[#00F59B]"
+                            : "bg-orange-500 text-white"
                             }`}
                         >
                           {item.badge}
@@ -989,22 +1101,24 @@ function DashboardPage() {
                     <span className="text-[#00F59B]">{displayName}</span>
                   </h1>
                   <p className="mt-1 text-xs text-slate-400 sm:text-sm">
-                    Your VPN setup, subscriptions, and digital tools in one
-                    place.
+                    Your WireGuard VPN setup, subscriptions, and digital tools in
+                    one place.
                   </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
                   <button
                     type="button"
-                    disabled={payingCode === "test-bypass-standard"}
-                    onClick={() => void triggerTestBypassOrder("standard")}
+                    disabled={payingCode === "test-bypass-standard_monthly"}
+                    onClick={() =>
+                      void triggerTestBypassOrder("standard_monthly")
+                    }
                     className="inline-flex items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-400/15 px-3.5 py-2 text-xs font-bold text-amber-200 transition hover:bg-amber-400/25 disabled:opacity-60"
                   >
                     <Zap className="h-3.5 w-3.5 text-amber-300" />
-                    {payingCode === "test-bypass-standard"
+                    {payingCode === "test-bypass-standard_monthly"
                       ? "Running Test Order..."
-                      : "Test Bypass Order (Standard)"}
+                      : "Test Bypass (Standard Monthly)"}
                   </button>
 
                   <div
@@ -1017,7 +1131,7 @@ function DashboardPage() {
                       <p className="text-xs font-bold">{statusIndicator.label}</p>
                       <p className="text-[11px] text-slate-300">
                         {activeKey
-                          ? "VPN key active in My VPN"
+                          ? "WireGuard config active in My VPN"
                           : "No active VPN configuration yet"}
                       </p>
                     </div>
@@ -1110,7 +1224,7 @@ function DashboardPage() {
                         Connection Summary
                       </h2>
                       <p className="text-xs text-slate-400">
-                        Account &amp; service readiness overview
+                        Account &amp; WireGuard service readiness overview
                       </p>
                     </div>
                     <button
@@ -1168,13 +1282,13 @@ function DashboardPage() {
                     <div>
                       <p className="text-slate-400">Supported Platforms</p>
                       <p className="mt-1 font-semibold text-white">
-                        Android, iOS, Windows
+                        Android, iOS, Windows (WireGuard App)
                       </p>
                     </div>
                     <div>
                       <p className="text-slate-400">Configuration State</p>
                       <p className="mt-1 font-semibold text-amber-300">
-                        {activeKey ? "Key Assigned" : "Not Activated"}
+                        {activeKey ? "Config Assigned" : "Not Activated"}
                       </p>
                     </div>
                   </div>
@@ -1206,24 +1320,24 @@ function DashboardPage() {
 
                       <button
                         type="button"
-                        onClick={() => selectTab("sms")}
+                        onClick={() => selectTab("subscriptions")}
                         className="flex w-full items-center justify-between rounded-2xl border border-white/[0.07] bg-[#050A15] px-4 py-3 text-left text-xs font-semibold text-white transition hover:border-amber-400/40"
                       >
                         <span className="flex items-center gap-2.5">
-                          <Smartphone className="h-4 w-4 text-amber-400" />
-                          Virtual SMS Numbers
+                          <CreditCard className="h-4 w-4 text-amber-400" />
+                          Monthly &amp; Yearly Plans
                         </span>
                         <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
                       </button>
 
                       <button
                         type="button"
-                        onClick={() => selectTab("products")}
+                        onClick={() => selectTab("sms")}
                         className="flex w-full items-center justify-between rounded-2xl border border-white/[0.07] bg-[#050A15] px-4 py-3 text-left text-xs font-semibold text-white transition hover:border-emerald-400/40"
                       >
                         <span className="flex items-center gap-2.5">
-                          <BookOpen className="h-4 w-4 text-emerald-300" />
-                          Digital E-Books Store
+                          <Smartphone className="h-4 w-4 text-emerald-300" />
+                          Virtual SMS Numbers
                         </span>
                         <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
                       </button>
@@ -1248,7 +1362,7 @@ function DashboardPage() {
                 <div>
                   <h2 className="text-xl font-extrabold text-white">My VPN</h2>
                   <p className="text-xs text-slate-400">
-                    Your active VPN credentials and setup steps.
+                    Your assigned WireGuard configuration and setup steps.
                   </p>
                 </div>
                 <span
@@ -1263,14 +1377,22 @@ function DashboardPage() {
 
               {activeKey ? (
                 <div className="space-y-3 rounded-2xl border border-[#00F59B]/25 bg-[#050A15] p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-[#00F59B]">
-                      Assigned Access Key
-                    </span>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <span className="text-xs font-semibold text-[#00F59B]">
+                        Assigned WireGuard Configuration ({currentPlanName})
+                      </span>
+                      {activeExpiresAt && (
+                        <p className="mt-0.5 text-[11px] text-slate-400">
+                          Expires:{" "}
+                          {new Date(activeExpiresAt).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
                     <button
                       type="button"
                       onClick={() => handleCopyKey(activeKey)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs font-semibold text-white hover:border-[#00F59B]/40"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-white hover:border-[#00F59B]/40"
                     >
                       {copiedKey ? (
                         <>
@@ -1280,19 +1402,19 @@ function DashboardPage() {
                       ) : (
                         <>
                           <Copy className="h-3.5 w-3.5" />
-                          Copy Key
+                          Copy WireGuard Config
                         </>
                       )}
                     </button>
                   </div>
-                  <code className="block overflow-x-auto rounded-xl bg-black/60 p-3 font-mono text-xs text-emerald-200">
+                  <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-xl bg-black/60 p-3.5 font-mono text-xs text-emerald-200">
                     {activeKey}
-                  </code>
+                  </pre>
                 </div>
               ) : (
                 <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-5 text-sm text-slate-300">
-                  No active VPN key assigned yet. Choose a subscription plan to
-                  activate access.
+                  No active WireGuard configuration assigned yet. Choose a
+                  Monthly or Yearly plan to activate access.
                   <div className="mt-3">
                     <button
                       type="button"
@@ -1309,30 +1431,30 @@ function DashboardPage() {
                 <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-4">
                   <p className="text-xs font-bold text-[#00F59B]">Step 1</p>
                   <p className="mt-1 text-sm font-bold text-white">
-                    Install Client App
+                    Install WireGuard App
                   </p>
                   <p className="mt-1 text-xs text-slate-400">
-                    Download your supported VPN client on Android, iOS, or
+                    Download the official WireGuard app on Android, iOS, or
                     Windows.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-4">
                   <p className="text-xs font-bold text-amber-400">Step 2</p>
                   <p className="mt-1 text-sm font-bold text-white">
-                    Import Credentials
+                    Create Tunnel From Scratch
                   </p>
                   <p className="mt-1 text-xs text-slate-400">
-                    Paste your assigned key or configuration profile into the
-                    app.
+                    Tap + in WireGuard, choose Create from scratch, and paste
+                    your copied config.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-4">
                   <p className="text-xs font-bold text-emerald-300">Step 3</p>
                   <p className="mt-1 text-sm font-bold text-white">
-                    Connect &amp; Browse
+                    Toggle On &amp; Connect
                   </p>
                   <p className="mt-1 text-xs text-slate-400">
-                    Toggle the connection switch on and verify your IP status.
+                    Save the tunnel and switch it on for encrypted VPN routing.
                   </p>
                 </div>
               </div>
@@ -1389,7 +1511,7 @@ function DashboardPage() {
                         disabled={payingCode === num.code}
                         onClick={() =>
                           void handleCheckout(
-                            num.code,
+                            "standard_monthly",
                             `${num.country} SMS (${num.service})`,
                             num.price
                           )
@@ -1409,41 +1531,87 @@ function DashboardPage() {
         {/* ==================== SUBSCRIPTIONS ==================== */}
         {activeTab === "subscriptions" && (
           <ScrollFloat>
-            <div className="space-y-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-extrabold text-white">
                     VPN Subscription Plans
                   </h2>
                   <p className="text-xs text-slate-400">
-                    Select a plan below to pay securely via Paystack and unlock
-                    your VPN access.
+                    Switch between Monthly and Yearly billing, then choose
+                    Standard, Plus, or Pro.
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  disabled={payingCode === "test-bypass-standard"}
-                  onClick={() => void triggerTestBypassOrder("standard")}
-                  className="inline-flex items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-400/15 px-3.5 py-2 text-xs font-bold text-amber-200 transition hover:bg-amber-400/25 disabled:opacity-60"
-                >
-                  <Zap className="h-3.5 w-3.5 text-amber-300" />
-                  {payingCode === "test-bypass-standard"
-                    ? "Running Test Order..."
-                    : "Test Bypass Order (Standard)"}
-                </button>
+                {/* Monthly / Yearly Billing Switcher */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <div
+                    role="tablist"
+                    aria-label="Billing Cycle"
+                    className="inline-flex rounded-2xl border border-white/[0.08] bg-[#050A15] p-1"
+                  >
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={billingCycle === "monthly"}
+                      onClick={() => setBillingCycle("monthly")}
+                      className={`rounded-xl px-4 py-2 text-xs font-bold transition ${billingCycle === "monthly"
+                        ? "bg-[#00F59B] text-[#040812] shadow-[0_0_16px_rgba(0,245,155,0.25)]"
+                        : "text-slate-300 hover:text-white"
+                        }`}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={billingCycle === "yearly"}
+                      onClick={() => setBillingCycle("yearly")}
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition ${billingCycle === "yearly"
+                        ? "bg-[#00F59B] text-[#040812] shadow-[0_0_16px_rgba(0,245,155,0.25)]"
+                        : "text-slate-300 hover:text-white"
+                        }`}
+                    >
+                      <span>Yearly</span>
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[10px] ${billingCycle === "yearly"
+                          ? "bg-[#040812] text-[#00F59B]"
+                          : "bg-amber-400/15 text-amber-300"
+                          }`}
+                      >
+                        Save 2 Mo
+                      </span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={
+                      payingCode === `test-bypass-${activeTestPlanType}`
+                    }
+                    onClick={() =>
+                      void triggerTestBypassOrder(activeTestPlanType)
+                    }
+                    className="inline-flex items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-400/15 px-3.5 py-2 text-xs font-bold text-amber-200 transition hover:bg-amber-400/25 disabled:opacity-60"
+                  >
+                    <Zap className="h-3.5 w-3.5 text-amber-300" />
+                    {payingCode === `test-bypass-${activeTestPlanType}`
+                      ? "Running Test..."
+                      : `Test Bypass (Standard ${billingCycle === "monthly" ? "Monthly" : "Yearly"
+                      })`}
+                  </button>
+                </div>
               </div>
 
               <div className="grid gap-5 md:grid-cols-3">
-                {PRICING_PLANS.map((plan) => {
-                  const amountNgn = parsePriceNgn(plan.priceDisplay);
+                {displayedPlans.map((plan) => {
                   const isFeatured = plan.id === "plus";
                   return (
                     <div
-                      key={plan.id}
+                      key={plan.planType}
                       className={`flex flex-col justify-between rounded-3xl border p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)] ${isFeatured
-                          ? "border-[#00F59B]/45 bg-gradient-to-b from-[#0D1D34] to-[#060B16]"
-                          : "border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95"
+                        ? "border-[#00F59B]/45 bg-gradient-to-b from-[#0D1D34] to-[#060B16]"
+                        : "border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95"
                         }`}
                     >
                       <div>
@@ -1481,15 +1649,25 @@ function DashboardPage() {
                         </p>
                         <button
                           type="button"
-                          disabled={payingCode === plan.id}
+                          disabled={payingCode === plan.planType}
                           onClick={() =>
-                            void handleCheckout(plan.id, plan.name, amountNgn)
+                            void handleCheckout(
+                              plan.planType,
+                              `${plan.name} (${billingCycle === "monthly"
+                                ? "Monthly"
+                                : "Yearly"
+                              })`,
+                              plan.priceNgn
+                            )
                           }
                           className="w-full rounded-xl bg-[#00F59B] py-2.5 text-xs font-bold text-[#040812] transition hover:opacity-95 disabled:opacity-50"
                         >
-                          {payingCode === plan.id
+                          {payingCode === plan.planType
                             ? "Launching Paystack..."
-                            : `Select ${plan.name}`}
+                            : `Select ${plan.name} (${billingCycle === "monthly"
+                              ? "Monthly"
+                              : "Yearly"
+                            })`}
                         </button>
                       </div>
                     </div>
@@ -1522,8 +1700,8 @@ function DashboardPage() {
                       type="button"
                       onClick={() => setSelectedNiche(niche)}
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${selectedNiche === niche
-                          ? "bg-[#00F59B] text-[#040812]"
-                          : "border border-white/[0.08] bg-[#081020] text-slate-300 hover:text-white"
+                        ? "bg-[#00F59B] text-[#040812]"
+                        : "border border-white/[0.08] bg-[#081020] text-slate-300 hover:text-white"
                         }`}
                     >
                       {niche}
@@ -1571,7 +1749,11 @@ function DashboardPage() {
                         type="button"
                         disabled={payingCode === book.code}
                         onClick={() =>
-                          void handleCheckout(book.code, book.title, book.price)
+                          void handleCheckout(
+                            "standard_monthly",
+                            book.title,
+                            book.price
+                          )
                         }
                         className="rounded-xl bg-[#00F59B] px-3.5 py-2 text-xs font-bold text-[#040812] transition hover:opacity-95 disabled:opacity-50"
                       >
@@ -1647,7 +1829,7 @@ function DashboardPage() {
                   </li>
                   <li className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-[#050A15] p-3">
                     <Lock className="h-4 w-4 shrink-0 text-emerald-300" />
-                    <span>Keep your VPN client updated to the latest release.</span>
+                    <span>Keep your WireGuard app updated to the latest release.</span>
                   </li>
                 </ul>
               </div>
@@ -1694,29 +1876,33 @@ function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.05]">
-                      {orders.map((order) => (
-                        <tr key={order.id} className="text-slate-200">
-                          <td className="py-3 pr-4 font-mono text-[11px]">
-                            {order.reference || order.reference_id || order.id}
-                          </td>
-                          <td className="py-3 pr-4 font-semibold">
-                            {order.plan_name ||
-                              order.plan_type ||
-                              order.plan_code ||
-                              "Order"}
-                          </td>
-                          <td className="py-3 pr-4">
-                            ₦{(Number(order.amount_ngn) || 0).toLocaleString()}
-                          </td>
-                          <td className="py-3">
-                            <span className="rounded-full bg-[#00F59B]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#00F59B]">
-                              {order.status ||
-                                order.payment_status ||
-                                "completed"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      {orders.map((order) => {
+                        const rawType =
+                          order.plan_name ||
+                          order.plan_type ||
+                          order.plan_code ||
+                          "Order";
+                        return (
+                          <tr key={order.id} className="text-slate-200">
+                            <td className="py-3 pr-4 font-mono text-[11px]">
+                              {order.reference || order.reference_id || order.id}
+                            </td>
+                            <td className="py-3 pr-4 font-semibold">
+                              {PLAN_LABELS[rawType] || rawType}
+                            </td>
+                            <td className="py-3 pr-4">
+                              ₦{(Number(order.amount_ngn) || 0).toLocaleString()}
+                            </td>
+                            <td className="py-3">
+                              <span className="rounded-full bg-[#00F59B]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#00F59B]">
+                                {order.status ||
+                                  order.payment_status ||
+                                  "completed"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

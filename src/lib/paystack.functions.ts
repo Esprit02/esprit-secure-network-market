@@ -2,7 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-type PlanType = "standard" | "plus" | "pro" | "monthly" | "yearly";
+export type VpnPlanType =
+  | "standard_monthly"
+  | "plus_monthly"
+  | "pro_monthly"
+  | "standard_yearly"
+  | "plus_yearly"
+  | "pro_yearly";
 
 interface ClaimedVaultRow {
   vault_id: string | null;
@@ -16,20 +22,22 @@ interface VaultRecord {
   expires_at: string | null;
 }
 
-const PLAN_AMOUNTS: Record<PlanType, number> = {
-  standard: 3999,
-  plus: 6999,
-  pro: 9999,
-  monthly: 4000,
-  yearly: 19999,
+const PLAN_AMOUNTS: Record<VpnPlanType, number> = {
+  standard_monthly: 3999,
+  plus_monthly: 6999,
+  pro_monthly: 9999,
+  standard_yearly: 39990,
+  plus_yearly: 69990,
+  pro_yearly: 99990,
 };
 
-const PLAN_DURATION_DAYS: Record<PlanType, number> = {
-  standard: 30,
-  plus: 30,
-  pro: 30,
-  monthly: 30,
-  yearly: 365,
+const PLAN_DURATION_DAYS: Record<VpnPlanType, number> = {
+  standard_monthly: 30,
+  plus_monthly: 30,
+  pro_monthly: 30,
+  standard_yearly: 365,
+  plus_yearly: 365,
+  pro_yearly: 365,
 };
 
 function getAuthUserId(context: unknown): string {
@@ -51,11 +59,12 @@ export const finalizePaystackOrder = createServerFn({ method: "POST" })
       .object({
         reference: z.string().min(6).max(120),
         plan_type: z.enum([
-          "standard",
-          "plus",
-          "pro",
-          "monthly",
-          "yearly",
+          "standard_monthly",
+          "plus_monthly",
+          "pro_monthly",
+          "standard_yearly",
+          "plus_yearly",
+          "pro_yearly",
         ]),
       })
       .parse(data),
