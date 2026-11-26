@@ -1,6 +1,4 @@
 
-import logoMark from "@/assets/logo-mark.png";
-
 export function BrandLogo({
   size = 32,
   withWordmark = true,
@@ -13,7 +11,7 @@ export function BrandLogo({
   return (
     <span className="inline-flex items-center gap-2">
       <img
-        src={logoMark}
+        src="/favicon.png"
         alt="EspritAccess logo"
         width={size}
         height={size}
