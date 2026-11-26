@@ -225,8 +225,8 @@ function ScrollFloat({
       ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
       className={`transform transition-all duration-700 ease-out ${visible
-          ? "translate-y-0 scale-100 opacity-100"
-          : "translate-y-6 scale-[0.99] opacity-0"
+        ? "translate-y-0 scale-100 opacity-100"
+        : "translate-y-6 scale-[0.99] opacity-0"
         } ${className}`}
     >
       {children}
@@ -918,12 +918,24 @@ function DashboardPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#040812]">
         <div className="relative flex h-24 w-24 items-center justify-center">
-          <div className="absolute inset-0 animate-spin rounded-full border-2 border-[#00F59B]/20 border-t-[#00F59B] shadow-[0_0_24px_rgba(0,245,155,0.3)]" />
-          <img
-            src="/favicon.png"
-            alt="EspritAccess"
-            className="h-16 w-16 rounded-2xl object-cover"
-          />
+          {/* Outer orbit ring */}
+          <div className="absolute inset-0 animate-spin rounded-full border-2 border-[#00F59B]/20 border-t-[#00F59B]" />
+
+          {/* Moving EA monogram */}
+          <svg
+            viewBox="0 0 64 64"
+            className="h-12 w-12 animate-pulse"
+            aria-label="EspritAccess loading"
+          >
+            <path
+              d="M12 16H30V22H18V29H28V35H18V42H30V48H12V16Z"
+              fill="#FFFFFF"
+            />
+            <path
+              d="M42 16L54 48H47L44.6 41H35.4L33 48H27L39 16H42ZM37.4 35.5H42.6L40 27.5L37.4 35.5Z"
+              fill="#00F59B"
+            />
+          </svg>
         </div>
       </div>
     );
@@ -1029,8 +1041,8 @@ function DashboardPage() {
                       type="button"
                       onClick={() => selectTab(item.id)}
                       className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition ${isActive
-                          ? "bg-[#00F59B] text-[#040812] shadow-[0_0_16px_rgba(0,245,155,0.25)]"
-                          : "border border-transparent text-slate-200 hover:border-white/[0.07] hover:bg-white/[0.05] hover:text-white"
+                        ? "bg-[#00F59B] text-[#040812] shadow-[0_0_16px_rgba(0,245,155,0.25)]"
+                        : "border border-transparent text-slate-200 hover:border-white/[0.07] hover:bg-white/[0.05] hover:text-white"
                         }`}
                     >
                       <span className="flex items-center gap-2.5">
@@ -1043,8 +1055,8 @@ function DashboardPage() {
                       {item.badge && (
                         <span
                           className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${isActive
-                              ? "bg-[#040812] text-[#00F59B]"
-                              : "bg-orange-500 text-white"
+                            ? "bg-[#040812] text-[#00F59B]"
+                            : "bg-orange-500 text-white"
                             }`}
                         >
                           {item.badge}
@@ -1556,8 +1568,8 @@ function DashboardPage() {
                       type="button"
                       onClick={() => setBillingCycle("monthly")}
                       className={`rounded-lg px-3 py-1.5 transition ${billingCycle === "monthly"
-                          ? "bg-[#00F59B] text-[#040812]"
-                          : "text-slate-300 hover:text-white"
+                        ? "bg-[#00F59B] text-[#040812]"
+                        : "text-slate-300 hover:text-white"
                         }`}
                     >
                       Monthly
@@ -1566,8 +1578,8 @@ function DashboardPage() {
                       type="button"
                       onClick={() => setBillingCycle("yearly")}
                       className={`rounded-lg px-3 py-1.5 transition ${billingCycle === "yearly"
-                          ? "bg-[#00F59B] text-[#040812]"
-                          : "text-slate-300 hover:text-white"
+                        ? "bg-[#00F59B] text-[#040812]"
+                        : "text-slate-300 hover:text-white"
                         }`}
                     >
                       Yearly
@@ -1598,8 +1610,8 @@ function DashboardPage() {
                     <div
                       key={plan.planType}
                       className={`flex flex-col justify-between rounded-3xl border p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)] ${isHighlighted
-                          ? "border-[#00F59B]/45 bg-gradient-to-b from-[#0D1D34] to-[#060B16]"
-                          : "border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95"
+                        ? "border-[#00F59B]/45 bg-gradient-to-b from-[#0D1D34] to-[#060B16]"
+                        : "border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95"
                         }`}
                     >
                       <div>
@@ -1683,8 +1695,8 @@ function DashboardPage() {
                       type="button"
                       onClick={() => setSelectedNiche(niche)}
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${selectedNiche === niche
-                          ? "bg-[#00F59B] text-[#040812]"
-                          : "border border-white/[0.08] bg-[#081020] text-slate-300 hover:text-white"
+                        ? "bg-[#00F59B] text-[#040812]"
+                        : "border border-white/[0.08] bg-[#081020] text-slate-300 hover:text-white"
                         }`}
                     >
                       {niche}
