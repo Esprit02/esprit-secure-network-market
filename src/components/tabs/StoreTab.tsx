@@ -71,7 +71,7 @@ export function StoreTab({ user }: { user: User }) {
       const rows = await listKeys();
       setKeys(rows as MyKey[]);
     } catch {
-      /* Keep existing dashboard state if loading fails */
+      /* Keep existing dashboard state if  fails */
     }
   }
 

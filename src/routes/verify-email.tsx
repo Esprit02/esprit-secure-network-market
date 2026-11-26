@@ -201,7 +201,7 @@ function VerifyEmail() {
             className="inline-flex w-full items-center justify-center rounded-full bg-[#10B981] py-3 text-sm font-bold text-[#040711] transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <RefreshCw
-              className={`mr-2 h-4 w-4 ${resending ? "animate-spin" : ""
+              className={`mr-2 h-4 w-4 ${resending ? "" : ""
                 }`}
             />
 

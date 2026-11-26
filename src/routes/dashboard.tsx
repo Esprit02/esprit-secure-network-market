@@ -225,8 +225,8 @@ function ScrollFloat({
       ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
       className={`transform transition-all duration-700 ease-out ${visible
-        ? "translate-y-0 scale-100 opacity-100"
-        : "translate-y-6 scale-[0.99] opacity-0"
+          ? "translate-y-0 scale-100 opacity-100"
+          : "translate-y-6 scale-[0.99] opacity-0"
         } ${className}`}
     >
       {children}
@@ -916,10 +916,14 @@ function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#040812] text-slate-200">
-        <div className="flex items-center gap-3">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#00F59B] border-t-transparent" />
-          <span className="text-sm font-medium">Loading EspritAccess...</span>
+      <div className="flex min-h-screen items-center justify-center bg-[#040812]">
+        <div className="relative flex h-24 w-24 items-center justify-center">
+          <div className="absolute inset-0 animate-spin rounded-full border-2 border-[#00F59B]/20 border-t-[#00F59B] shadow-[0_0_24px_rgba(0,245,155,0.3)]" />
+          <img
+            src="/favicon.png"
+            alt="EspritAccess"
+            className="h-16 w-16 rounded-2xl object-cover"
+          />
         </div>
       </div>
     );
@@ -951,12 +955,12 @@ function DashboardPage() {
 
             <Link to="/" className="group flex items-center gap-2">
               <img
-                src="/logo-mark.png"
+                src="/favicon.png"
                 alt="EspritAccess"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}
-                className="h-8 w-8 rounded-lg border border-white/10"
+                className="h-8 w-8 rounded-lg border border-white/10 object-cover"
               />
               <span className="hidden text-base font-extrabold tracking-tight text-white sm:inline">
                 Esprit<span className="text-[#00F59B]">Access</span>
@@ -1025,8 +1029,8 @@ function DashboardPage() {
                       type="button"
                       onClick={() => selectTab(item.id)}
                       className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition ${isActive
-                        ? "bg-[#00F59B] text-[#040812] shadow-[0_0_16px_rgba(0,245,155,0.25)]"
-                        : "border border-transparent text-slate-200 hover:border-white/[0.07] hover:bg-white/[0.05] hover:text-white"
+                          ? "bg-[#00F59B] text-[#040812] shadow-[0_0_16px_rgba(0,245,155,0.25)]"
+                          : "border border-transparent text-slate-200 hover:border-white/[0.07] hover:bg-white/[0.05] hover:text-white"
                         }`}
                     >
                       <span className="flex items-center gap-2.5">
@@ -1039,8 +1043,8 @@ function DashboardPage() {
                       {item.badge && (
                         <span
                           className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${isActive
-                            ? "bg-[#040812] text-[#00F59B]"
-                            : "bg-orange-500 text-white"
+                              ? "bg-[#040812] text-[#00F59B]"
+                              : "bg-orange-500 text-white"
                             }`}
                         >
                           {item.badge}
@@ -1101,8 +1105,8 @@ function DashboardPage() {
                     <span className="text-[#00F59B]">{displayName}</span>
                   </h1>
                   <p className="mt-1 text-xs text-slate-400 sm:text-sm">
-                    Your WireGuard VPN setup, subscriptions, and digital tools in
-                    one place.
+                    Your VPN setup, subscriptions, and digital tools in one
+                    place.
                   </p>
                 </div>
 
@@ -1118,7 +1122,7 @@ function DashboardPage() {
                     <Zap className="h-3.5 w-3.5 text-amber-300" />
                     {payingCode === "test-bypass-standard_monthly"
                       ? "Running Test Order..."
-                      : "Test Bypass (Standard Monthly)"}
+                      : "Test Bypass Order (Standard)"}
                   </button>
 
                   <div
@@ -1131,7 +1135,7 @@ function DashboardPage() {
                       <p className="text-xs font-bold">{statusIndicator.label}</p>
                       <p className="text-[11px] text-slate-300">
                         {activeKey
-                          ? "WireGuard config active in My VPN"
+                          ? "VPN key active in My VPN"
                           : "No active VPN configuration yet"}
                       </p>
                     </div>
@@ -1224,7 +1228,7 @@ function DashboardPage() {
                         Connection Summary
                       </h2>
                       <p className="text-xs text-slate-400">
-                        Account &amp; WireGuard service readiness overview
+                        Account &amp; service readiness overview
                       </p>
                     </div>
                     <button
@@ -1282,13 +1286,13 @@ function DashboardPage() {
                     <div>
                       <p className="text-slate-400">Supported Platforms</p>
                       <p className="mt-1 font-semibold text-white">
-                        Android, iOS, Windows (WireGuard App)
+                        Android, iOS, Windows
                       </p>
                     </div>
                     <div>
                       <p className="text-slate-400">Configuration State</p>
                       <p className="mt-1 font-semibold text-amber-300">
-                        {activeKey ? "Config Assigned" : "Not Activated"}
+                        {activeKey ? "Key Assigned" : "Not Activated"}
                       </p>
                     </div>
                   </div>
@@ -1320,24 +1324,24 @@ function DashboardPage() {
 
                       <button
                         type="button"
-                        onClick={() => selectTab("subscriptions")}
+                        onClick={() => selectTab("sms")}
                         className="flex w-full items-center justify-between rounded-2xl border border-white/[0.07] bg-[#050A15] px-4 py-3 text-left text-xs font-semibold text-white transition hover:border-amber-400/40"
                       >
                         <span className="flex items-center gap-2.5">
-                          <CreditCard className="h-4 w-4 text-amber-400" />
-                          Monthly &amp; Yearly Plans
+                          <Smartphone className="h-4 w-4 text-amber-400" />
+                          Virtual SMS Numbers
                         </span>
                         <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
                       </button>
 
                       <button
                         type="button"
-                        onClick={() => selectTab("sms")}
+                        onClick={() => selectTab("products")}
                         className="flex w-full items-center justify-between rounded-2xl border border-white/[0.07] bg-[#050A15] px-4 py-3 text-left text-xs font-semibold text-white transition hover:border-emerald-400/40"
                       >
                         <span className="flex items-center gap-2.5">
-                          <Smartphone className="h-4 w-4 text-emerald-300" />
-                          Virtual SMS Numbers
+                          <BookOpen className="h-4 w-4 text-emerald-300" />
+                          Digital E-Books Store
                         </span>
                         <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
                       </button>
@@ -1362,7 +1366,7 @@ function DashboardPage() {
                 <div>
                   <h2 className="text-xl font-extrabold text-white">My VPN</h2>
                   <p className="text-xs text-slate-400">
-                    Your assigned WireGuard configuration and setup steps.
+                    Your active VPN credentials and setup steps.
                   </p>
                 </div>
                 <span
@@ -1392,7 +1396,7 @@ function DashboardPage() {
                     <button
                       type="button"
                       onClick={() => handleCopyKey(activeKey)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-white hover:border-[#00F59B]/40"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs font-semibold text-white hover:border-[#00F59B]/40"
                     >
                       {copiedKey ? (
                         <>
@@ -1402,19 +1406,19 @@ function DashboardPage() {
                       ) : (
                         <>
                           <Copy className="h-3.5 w-3.5" />
-                          Copy WireGuard Config
+                          Copy Config
                         </>
                       )}
                     </button>
                   </div>
-                  <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-xl bg-black/60 p-3.5 font-mono text-xs text-emerald-200">
+                  <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl bg-black/60 p-3 font-mono text-xs text-emerald-200">
                     {activeKey}
                   </pre>
                 </div>
               ) : (
                 <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-5 text-sm text-slate-300">
-                  No active WireGuard configuration assigned yet. Choose a
-                  Monthly or Yearly plan to activate access.
+                  No active VPN key assigned yet. Choose a subscription plan to
+                  activate access.
                   <div className="mt-3">
                     <button
                       type="button"
@@ -1441,20 +1445,21 @@ function DashboardPage() {
                 <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-4">
                   <p className="text-xs font-bold text-amber-400">Step 2</p>
                   <p className="mt-1 text-sm font-bold text-white">
-                    Create Tunnel From Scratch
+                    Import Configuration
                   </p>
                   <p className="mt-1 text-xs text-slate-400">
-                    Tap + in WireGuard, choose Create from scratch, and paste
-                    your copied config.
+                    Paste your assigned WireGuard configuration into a new tunnel
+                    in the app.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-4">
                   <p className="text-xs font-bold text-emerald-300">Step 3</p>
                   <p className="mt-1 text-sm font-bold text-white">
-                    Toggle On &amp; Connect
+                    Connect &amp; Browse
                   </p>
                   <p className="mt-1 text-xs text-slate-400">
-                    Save the tunnel and switch it on for encrypted VPN routing.
+                    Toggle the tunnel switch on and verify your protected
+                    connection.
                   </p>
                 </div>
               </div>
@@ -1508,7 +1513,7 @@ function DashboardPage() {
                       </span>
                       <button
                         type="button"
-                        disabled={payingCode === num.code}
+                        disabled={payingCode === "standard_monthly"}
                         onClick={() =>
                           void handleCheckout(
                             "standard_monthly",
@@ -1518,7 +1523,9 @@ function DashboardPage() {
                         }
                         className="rounded-xl bg-[#00F59B] px-3.5 py-2 text-xs font-bold text-[#040812] transition hover:opacity-95 disabled:opacity-50"
                       >
-                        {payingCode === num.code ? "Opening..." : "Get Number"}
+                        {payingCode === "standard_monthly"
+                          ? "Opening..."
+                          : "Get Number"}
                       </button>
                     </div>
                   </div>
@@ -1531,64 +1538,45 @@ function DashboardPage() {
         {/* ==================== SUBSCRIPTIONS ==================== */}
         {activeTab === "subscriptions" && (
           <ScrollFloat>
-            <div className="space-y-6">
-              <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-xl font-extrabold text-white">
                     VPN Subscription Plans
                   </h2>
                   <p className="text-xs text-slate-400">
-                    Switch between Monthly and Yearly billing, then choose
-                    Standard, Plus, or Pro.
+                    Select a plan below to pay securely via Paystack and unlock
+                    your VPN access.
                   </p>
                 </div>
 
-                {/* Monthly / Yearly Billing Switcher */}
-                <div className="flex flex-wrap items-center gap-3">
-                  <div
-                    role="tablist"
-                    aria-label="Billing Cycle"
-                    className="inline-flex rounded-2xl border border-white/[0.08] bg-[#050A15] p-1"
-                  >
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="inline-flex rounded-xl border border-white/10 bg-[#050A15] p-1 text-xs font-bold">
                     <button
                       type="button"
-                      role="tab"
-                      aria-selected={billingCycle === "monthly"}
                       onClick={() => setBillingCycle("monthly")}
-                      className={`rounded-xl px-4 py-2 text-xs font-bold transition ${billingCycle === "monthly"
-                        ? "bg-[#00F59B] text-[#040812] shadow-[0_0_16px_rgba(0,245,155,0.25)]"
-                        : "text-slate-300 hover:text-white"
+                      className={`rounded-lg px-3 py-1.5 transition ${billingCycle === "monthly"
+                          ? "bg-[#00F59B] text-[#040812]"
+                          : "text-slate-300 hover:text-white"
                         }`}
                     >
                       Monthly
                     </button>
                     <button
                       type="button"
-                      role="tab"
-                      aria-selected={billingCycle === "yearly"}
                       onClick={() => setBillingCycle("yearly")}
-                      className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition ${billingCycle === "yearly"
-                        ? "bg-[#00F59B] text-[#040812] shadow-[0_0_16px_rgba(0,245,155,0.25)]"
-                        : "text-slate-300 hover:text-white"
+                      className={`rounded-lg px-3 py-1.5 transition ${billingCycle === "yearly"
+                          ? "bg-[#00F59B] text-[#040812]"
+                          : "text-slate-300 hover:text-white"
                         }`}
                     >
-                      <span>Yearly</span>
-                      <span
-                        className={`rounded-full px-1.5 py-0.5 text-[10px] ${billingCycle === "yearly"
-                          ? "bg-[#040812] text-[#00F59B]"
-                          : "bg-amber-400/15 text-amber-300"
-                          }`}
-                      >
-                        Save 2 Mo
-                      </span>
+                      Yearly
                     </button>
                   </div>
 
                   <button
                     type="button"
-                    disabled={
-                      payingCode === `test-bypass-${activeTestPlanType}`
-                    }
+                    disabled={payingCode === `test-bypass-${activeTestPlanType}`}
                     onClick={() =>
                       void triggerTestBypassOrder(activeTestPlanType)
                     }
@@ -1596,8 +1584,8 @@ function DashboardPage() {
                   >
                     <Zap className="h-3.5 w-3.5 text-amber-300" />
                     {payingCode === `test-bypass-${activeTestPlanType}`
-                      ? "Running Test..."
-                      : `Test Bypass (Standard ${billingCycle === "monthly" ? "Monthly" : "Yearly"
+                      ? "Running Test Order..."
+                      : `Test Bypass Order (${billingCycle === "monthly" ? "Monthly" : "Yearly"
                       })`}
                   </button>
                 </div>
@@ -1605,17 +1593,17 @@ function DashboardPage() {
 
               <div className="grid gap-5 md:grid-cols-3">
                 {displayedPlans.map((plan) => {
-                  const isFeatured = plan.id === "plus";
+                  const isHighlighted = plan.id === "plus";
                   return (
                     <div
                       key={plan.planType}
-                      className={`flex flex-col justify-between rounded-3xl border p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)] ${isFeatured
-                        ? "border-[#00F59B]/45 bg-gradient-to-b from-[#0D1D34] to-[#060B16]"
-                        : "border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95"
+                      className={`flex flex-col justify-between rounded-3xl border p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)] ${isHighlighted
+                          ? "border-[#00F59B]/45 bg-gradient-to-b from-[#0D1D34] to-[#060B16]"
+                          : "border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95"
                         }`}
                     >
                       <div>
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center justify-between">
                           <h3 className="text-lg font-extrabold text-white">
                             {plan.name}
                           </h3>
@@ -1644,7 +1632,7 @@ function DashboardPage() {
                       </div>
 
                       <div className="mt-6">
-                        <p className="mb-3 text-[11px] text-slate-400">
+                        <p className="mb-2 text-[11px] text-slate-400">
                           {plan.preCheckoutNote}
                         </p>
                         <button
@@ -1653,10 +1641,7 @@ function DashboardPage() {
                           onClick={() =>
                             void handleCheckout(
                               plan.planType,
-                              `${plan.name} (${billingCycle === "monthly"
-                                ? "Monthly"
-                                : "Yearly"
-                              })`,
+                              `${plan.name} (${plan.billingPeriod})`,
                               plan.priceNgn
                             )
                           }
@@ -1664,9 +1649,7 @@ function DashboardPage() {
                         >
                           {payingCode === plan.planType
                             ? "Launching Paystack..."
-                            : `Select ${plan.name} (${billingCycle === "monthly"
-                              ? "Monthly"
-                              : "Yearly"
+                            : `Get ${plan.name} (${billingCycle === "monthly" ? "Monthly" : "Yearly"
                             })`}
                         </button>
                       </div>
@@ -1700,8 +1683,8 @@ function DashboardPage() {
                       type="button"
                       onClick={() => setSelectedNiche(niche)}
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${selectedNiche === niche
-                        ? "bg-[#00F59B] text-[#040812]"
-                        : "border border-white/[0.08] bg-[#081020] text-slate-300 hover:text-white"
+                          ? "bg-[#00F59B] text-[#040812]"
+                          : "border border-white/[0.08] bg-[#081020] text-slate-300 hover:text-white"
                         }`}
                     >
                       {niche}
@@ -1747,7 +1730,7 @@ function DashboardPage() {
                       </span>
                       <button
                         type="button"
-                        disabled={payingCode === book.code}
+                        disabled={payingCode === "standard_monthly"}
                         onClick={() =>
                           void handleCheckout(
                             "standard_monthly",
@@ -1757,7 +1740,9 @@ function DashboardPage() {
                         }
                         className="rounded-xl bg-[#00F59B] px-3.5 py-2 text-xs font-bold text-[#040812] transition hover:opacity-95 disabled:opacity-50"
                       >
-                        {payingCode === book.code ? "Opening..." : "Buy E-Book"}
+                        {payingCode === "standard_monthly"
+                          ? "Opening..."
+                          : "Buy E-Book"}
                       </button>
                     </div>
                   </div>
@@ -1829,7 +1814,7 @@ function DashboardPage() {
                   </li>
                   <li className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-[#050A15] p-3">
                     <Lock className="h-4 w-4 shrink-0 text-emerald-300" />
-                    <span>Keep your WireGuard app updated to the latest release.</span>
+                    <span>Keep your VPN client updated to the latest release.</span>
                   </li>
                 </ul>
               </div>
@@ -1876,33 +1861,30 @@ function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.05]">
-                      {orders.map((order) => {
-                        const rawType =
-                          order.plan_name ||
-                          order.plan_type ||
-                          order.plan_code ||
-                          "Order";
-                        return (
-                          <tr key={order.id} className="text-slate-200">
-                            <td className="py-3 pr-4 font-mono text-[11px]">
-                              {order.reference || order.reference_id || order.id}
-                            </td>
-                            <td className="py-3 pr-4 font-semibold">
-                              {PLAN_LABELS[rawType] || rawType}
-                            </td>
-                            <td className="py-3 pr-4">
-                              ₦{(Number(order.amount_ngn) || 0).toLocaleString()}
-                            </td>
-                            <td className="py-3">
-                              <span className="rounded-full bg-[#00F59B]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#00F59B]">
-                                {order.status ||
-                                  order.payment_status ||
-                                  "completed"}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      {orders.map((order) => (
+                        <tr key={order.id} className="text-slate-200">
+                          <td className="py-3 pr-4 font-mono text-[11px]">
+                            {order.reference || order.reference_id || order.id}
+                          </td>
+                          <td className="py-3 pr-4 font-semibold">
+                            {PLAN_LABELS[order.plan_type || ""] ||
+                              order.plan_name ||
+                              order.plan_code ||
+                              order.plan_type ||
+                              "Order"}
+                          </td>
+                          <td className="py-3 pr-4">
+                            ₦{(Number(order.amount_ngn) || 0).toLocaleString()}
+                          </td>
+                          <td className="py-3">
+                            <span className="rounded-full bg-[#00F59B]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#00F59B]">
+                              {order.status ||
+                                order.payment_status ||
+                                "completed"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
