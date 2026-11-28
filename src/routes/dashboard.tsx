@@ -699,45 +699,6 @@ function DashboardPage() {
     setStatusMessage(error ? error.message : "Password updated successfully.");
   }
 
-  async function triggerTestBypassOrder(
-    plan_type: VpnPlanType = "standard_monthly"
-  ) {
-    if (!user?.email) return;
-    const testCode = `test-bypass-${plan_type}`;
-    setPayingCode(testCode);
-    setStatusMessage(null);
-    const testRef = `TEST_${Date.now()}`;
-
-    try {
-      const result = await (
-        finalizePaystackOrder as (args: {
-          data: {
-            reference: string;
-            plan_type: VpnPlanType;
-          };
-        }) => Promise<unknown>
-      )({
-        data: {
-          reference: testRef,
-          plan_type,
-        },
-      });
-      console.log("TEST order result:", result);
-      await fetchOrders(user.id);
-      setStatusMessage(
-        `Test bypass order (${testRef}) finalized for ${PLAN_LABELS[plan_type] || plan_type
-        }. Orders refreshed.`
-      );
-    } catch (err: unknown) {
-      const detail =
-        err instanceof Error ? err.message : "Test bypass order failed.";
-      console.error("TEST order error:", err);
-      setStatusMessage(`Test bypass error (${testRef}): ${detail}`);
-    } finally {
-      setPayingCode(null);
-    }
-  }
-
   async function handleCheckout(
     planType: VpnPlanType,
     name: string,
@@ -891,9 +852,6 @@ function DashboardPage() {
   const displayedPlans =
     billingCycle === "monthly" ? monthlyPlans : YEARLY_PRICING_PLANS;
 
-  const activeTestPlanType: VpnPlanType =
-    billingCycle === "monthly" ? "standard_monthly" : "standard_yearly";
-
   const filteredBooks = DIGITAL_PRODUCTS.filter((b) => {
     const matchesNiche = selectedNiche === "All" || b.niche === selectedNiche;
     const q = searchQuery.trim().toLowerCase();
@@ -918,10 +876,7 @@ function DashboardPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#040812]">
         <div className="relative flex h-24 w-24 items-center justify-center">
-          {/* Outer orbit ring */}
           <div className="absolute inset-0 animate-spin rounded-full border-2 border-[#00F59B]/20 border-t-[#00F59B]" />
-
-          {/* Moving EA monogram */}
           <svg
             viewBox="0 0 64 64"
             className="h-12 w-12 animate-pulse"
@@ -943,13 +898,10 @@ function DashboardPage() {
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-[#040812] text-slate-100 antialiased selection:bg-[#00F59B]/25 selection:text-[#00F59B]">
-      {/* Deep Obsidian Navy Ambient Emerald & Warm Amber Glow */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(0,245,155,0.09),transparent_40%),radial-gradient(circle_at_88%_25%,rgba(245,158,11,0.06),transparent_38%),radial-gradient(circle_at_50%_92%,rgba(16,185,129,0.07),transparent_44%)]" />
 
-      {/* Top Navigation Bar with Three-Line Hamburger Menu at the Top */}
       <header className="relative z-40 mx-auto w-full max-w-6xl px-4 pt-4 pb-2 sm:px-6">
         <div className="relative flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-[#081020]/90 px-3.5 py-2.5 shadow-[0_14px_40px_rgba(0,0,0,0.75)] backdrop-blur-xl sm:px-4">
-          {/* Left: Top Hamburger Button + Brand */}
           <div className="flex shrink-0 items-center gap-2.5">
             <button
               type="button"
@@ -980,7 +932,6 @@ function DashboardPage() {
             </Link>
           </div>
 
-          {/* Center: Search */}
           <div className="relative min-w-0 max-w-md flex-1">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
@@ -992,7 +943,6 @@ function DashboardPage() {
             />
           </div>
 
-          {/* Right: Notifications & Sign Out */}
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
@@ -1015,7 +965,6 @@ function DashboardPage() {
             </button>
           </div>
 
-          {/* Dropdown Menu Panel Opened From Top Hamburger */}
           {menuOpen && (
             <nav
               aria-label="Dashboard Navigation"
@@ -1093,7 +1042,6 @@ function DashboardPage() {
         </div>
       </header>
 
-      {/* Main Content Container */}
       <main className="relative z-10 mx-auto w-full max-w-6xl space-y-6 px-4 pb-20 pt-4 sm:px-6">
         {statusMessage && (
           <div className="rounded-2xl border border-[#00F59B]/30 bg-emerald-950/40 px-4 py-3 text-xs font-medium text-emerald-200 backdrop-blur-md">
@@ -1101,10 +1049,8 @@ function DashboardPage() {
           </div>
         )}
 
-        {/* ==================== OVERVIEW / REALISTIC OPERATIONS DASHBOARD ==================== */}
         {activeTab === "dashboard" && (
           <div className="space-y-6">
-            {/* Welcome & Live Service Status Banner */}
             <ScrollFloat>
               <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/[0.07] bg-gradient-to-br from-[#0B1528]/90 to-[#060B16]/95 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.8),0_0_28px_rgba(0,245,155,0.08)] backdrop-blur-xl sm:p-6">
                 <div className="min-w-0">
@@ -1123,20 +1069,6 @@ function DashboardPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    disabled={payingCode === "test-bypass-standard_monthly"}
-                    onClick={() =>
-                      void triggerTestBypassOrder("standard_monthly")
-                    }
-                    className="inline-flex items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-400/15 px-3.5 py-2 text-xs font-bold text-amber-200 transition hover:bg-amber-400/25 disabled:opacity-60"
-                  >
-                    <Zap className="h-3.5 w-3.5 text-amber-300" />
-                    {payingCode === "test-bypass-standard_monthly"
-                      ? "Running Test Order..."
-                      : "Test Bypass Order (Standard)"}
-                  </button>
-
                   <div
                     className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${statusIndicator.pillClass}`}
                   >
@@ -1156,7 +1088,6 @@ function DashboardPage() {
               </div>
             </ScrollFloat>
 
-            {/* 4 Key Metric Cards */}
             <ScrollFloat delay={60}>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-2xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-5 shadow-[0_14px_40px_rgba(0,0,0,0.75)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-[#00F59B]/35 hover:shadow-[0_18px_45px_rgba(0,245,155,0.14)]">
@@ -1230,7 +1161,6 @@ function DashboardPage() {
               </div>
             </ScrollFloat>
 
-            {/* Connection Summary + Quick Access */}
             <div className="grid gap-6 lg:grid-cols-3">
               <ScrollFloat delay={120} className="lg:col-span-2">
                 <div className="flex h-full flex-col justify-between rounded-3xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)] backdrop-blur-md">
@@ -1370,7 +1300,6 @@ function DashboardPage() {
           </div>
         )}
 
-        {/* ==================== MY VPN ==================== */}
         {activeTab === "vpn" && (
           <ScrollFloat>
             <div className="space-y-6 rounded-3xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)] backdrop-blur-md">
@@ -1479,7 +1408,6 @@ function DashboardPage() {
           </ScrollFloat>
         )}
 
-        {/* ==================== VIRTUAL SMS ==================== */}
         {activeTab === "sms" && (
           <ScrollFloat>
             <div className="space-y-5">
@@ -1547,7 +1475,6 @@ function DashboardPage() {
           </ScrollFloat>
         )}
 
-        {/* ==================== SUBSCRIPTIONS ==================== */}
         {activeTab === "subscriptions" && (
           <ScrollFloat>
             <div className="space-y-5">
@@ -1562,43 +1489,26 @@ function DashboardPage() {
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <div className="inline-flex rounded-xl border border-white/10 bg-[#050A15] p-1 text-xs font-bold">
-                    <button
-                      type="button"
-                      onClick={() => setBillingCycle("monthly")}
-                      className={`rounded-lg px-3 py-1.5 transition ${billingCycle === "monthly"
-                        ? "bg-[#00F59B] text-[#040812]"
-                        : "text-slate-300 hover:text-white"
-                        }`}
-                    >
-                      Monthly
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBillingCycle("yearly")}
-                      className={`rounded-lg px-3 py-1.5 transition ${billingCycle === "yearly"
-                        ? "bg-[#00F59B] text-[#040812]"
-                        : "text-slate-300 hover:text-white"
-                        }`}
-                    >
-                      Yearly
-                    </button>
-                  </div>
-
+                <div className="inline-flex rounded-xl border border-white/10 bg-[#050A15] p-1 text-xs font-bold">
                   <button
                     type="button"
-                    disabled={payingCode === `test-bypass-${activeTestPlanType}`}
-                    onClick={() =>
-                      void triggerTestBypassOrder(activeTestPlanType)
-                    }
-                    className="inline-flex items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-400/15 px-3.5 py-2 text-xs font-bold text-amber-200 transition hover:bg-amber-400/25 disabled:opacity-60"
+                    onClick={() => setBillingCycle("monthly")}
+                    className={`rounded-lg px-3 py-1.5 transition ${billingCycle === "monthly"
+                      ? "bg-[#00F59B] text-[#040812]"
+                      : "text-slate-300 hover:text-white"
+                      }`}
                   >
-                    <Zap className="h-3.5 w-3.5 text-amber-300" />
-                    {payingCode === `test-bypass-${activeTestPlanType}`
-                      ? "Running Test Order..."
-                      : `Test Bypass Order (${billingCycle === "monthly" ? "Monthly" : "Yearly"
-                      })`}
+                    Monthly
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBillingCycle("yearly")}
+                    className={`rounded-lg px-3 py-1.5 transition ${billingCycle === "yearly"
+                      ? "bg-[#00F59B] text-[#040812]"
+                      : "text-slate-300 hover:text-white"
+                      }`}
+                  >
+                    Yearly
                   </button>
                 </div>
               </div>
@@ -1673,7 +1583,6 @@ function DashboardPage() {
           </ScrollFloat>
         )}
 
-        {/* ==================== DIGITAL PRODUCTS ==================== */}
         {activeTab === "products" && (
           <ScrollFloat>
             <div className="space-y-5">
@@ -1764,7 +1673,6 @@ function DashboardPage() {
           </ScrollFloat>
         )}
 
-        {/* ==================== SECURITY TOOLS ==================== */}
         {activeTab === "security" && (
           <ScrollFloat>
             <div className="grid gap-6 md:grid-cols-2">
@@ -1834,7 +1742,6 @@ function DashboardPage() {
           </ScrollFloat>
         )}
 
-        {/* ==================== BILLING & ORDERS ==================== */}
         {activeTab === "billing" && (
           <ScrollFloat>
             <div className="rounded-3xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)]">
@@ -1905,7 +1812,6 @@ function DashboardPage() {
           </ScrollFloat>
         )}
 
-        {/* ==================== REFERRAL PROGRAM ==================== */}
         {activeTab === "referrals" && (
           <ScrollFloat>
             <div className="rounded-3xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)]">
@@ -1951,7 +1857,6 @@ function DashboardPage() {
           </ScrollFloat>
         )}
 
-        {/* ==================== SUPPORT CENTER ==================== */}
         {activeTab === "support" && (
           <ScrollFloat>
             <div className="grid gap-5 md:grid-cols-2">
@@ -1994,7 +1899,6 @@ function DashboardPage() {
           </ScrollFloat>
         )}
 
-        {/* ==================== ACCOUNT SETTINGS ==================== */}
         {activeTab === "settings" && (
           <ScrollFloat>
             <div className="grid gap-6 md:grid-cols-2">
@@ -2066,7 +1970,6 @@ function DashboardPage() {
           </ScrollFloat>
         )}
 
-        {/* ==================== NOTIFICATIONS ==================== */}
         {activeTab === "notifications" && (
           <ScrollFloat>
             <div className="space-y-4 rounded-3xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)]">
