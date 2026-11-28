@@ -24,7 +24,7 @@ interface ProvisionApiResponse {
 }
 
 const PLAN_AMOUNTS: Record<VpnPlanType, number> = {
-  standard_monthly: 3999,
+  standard_monthly: 100,
   plus_monthly: 6999,
   pro_monthly: 9999,
   standard_yearly: 39990,
@@ -124,8 +124,7 @@ export const finalizePaystackOrder = createServerFn({ method: "POST" })
     const userEmail = getAuthUserEmail(context, userId);
     const expectedAmountNgn = PLAN_AMOUNTS[data.plan_type];
     const expectedKobo = expectedAmountNgn * 100;
-    const isSandboxBypass =
-      data.reference.startsWith("TEST_") || data.reference.startsWith("test-");
+    const isSandboxBypass = false;
 
     let paystackCustomerEmail: string | undefined;
 

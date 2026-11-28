@@ -17,12 +17,12 @@ export const PRICING_PLANS: PricingPlan[] = [
     {
         id: "standard",
         name: "Standard",
-        priceDisplay: "₦4,000",
+        priceDisplay: "₦100",
         billingPeriod: "Monthly",
-        billingLabel: "Monthly Billing · ₦4,000 / month",
+        billingLabel: "Monthly Billing · ₦100 / month",
         summary: "Core connectivity access for everyday digital usage.",
         features: [
-            "Monthly billing cycle (₦4,000 / month)",
+            "Monthly billing cycle (₦100 / month)",
             "Configuration and device setup instructions",
             `Support via ${SUPPORT_EMAIL}`,
         ],
