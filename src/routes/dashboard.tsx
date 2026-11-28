@@ -50,6 +50,7 @@ import {
   Activity,
   CheckCircle2,
   RefreshCw,
+  Gauge,
 } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
@@ -71,6 +72,12 @@ type TabKey =
 
 type BillingCycle = "monthly" | "yearly";
 
+type VpnCountryFilter =
+  | "All"
+  | "United States (US)"
+  | "United Kingdom (UK)"
+  | "Multi-Region";
+
 type BookNiche =
   | "All"
   | "Finance"
@@ -91,6 +98,8 @@ interface OrderRecord {
   reference_id?: string;
   vpn_key?: string;
   created_at?: string;
+  bandwidth_limit_bytes?: number | null;
+  bandwidth_used_bytes?: number | null;
 }
 
 interface AssignedKeyRecord {
@@ -100,6 +109,8 @@ interface AssignedKeyRecord {
   created_at: string;
   api_key_or_config: string | null;
   expires_at: string | null;
+  bandwidth_limit_bytes?: number | null;
+  bandwidth_used_bytes?: number | null;
 }
 
 interface PaystackInlineClient {
@@ -124,69 +135,123 @@ function parsePriceNgn(priceDisplay: string): number {
   return Number(digits) || 0;
 }
 
+const BYTES_PER_GB = 1024 * 1024 * 1024;
+
+function getPlanAllowanceGb(
+  planKey: string,
+  hasActiveKey: boolean,
+  limitBytes?: number | null
+): number {
+  if (typeof limitBytes === "number" && limitBytes > 0) {
+    return Number((limitBytes / BYTES_PER_GB).toFixed(2));
+  }
+  const normalized = planKey.toLowerCase();
+  if (normalized.includes("pro") && normalized.includes("yearly")) return 360;
+  if (normalized.includes("plus") && normalized.includes("yearly")) return 240;
+  if (normalized.includes("standard") && normalized.includes("yearly")) return 180;
+  if (normalized.includes("pro")) return 30;
+  if (normalized.includes("plus")) return 20;
+  if (normalized.includes("standard")) return 15;
+  return hasActiveKey ? 15 : 0;
+}
+
+function getUsedGb(
+  hasActiveKey: boolean,
+  usedBytes?: number | null,
+  allowanceGb = 0
+): number {
+  if (typeof usedBytes === "number" && usedBytes >= 0) {
+    return Math.min(allowanceGb, Number((usedBytes / BYTES_PER_GB).toFixed(2)));
+  }
+  return hasActiveKey ? Math.min(allowanceGb, 0.42) : 0;
+}
+
+function getDaysRemaining(
+  expiresAt: string | null,
+  hasActiveKey: boolean
+): number {
+  if (!hasActiveKey) return 0;
+  if (!expiresAt) return 30;
+  const diffMs = new Date(expiresAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+}
+
 const PLAN_LABELS: Record<string, string> = {
-  standard_monthly: "Standard (Monthly)",
-  plus_monthly: "Plus (Monthly)",
-  pro_monthly: "Pro (Monthly)",
-  standard_yearly: "Standard (Yearly)",
-  plus_yearly: "Plus (Yearly)",
-  pro_yearly: "Pro (Yearly)",
+  standard_monthly: "Standard · US (15 GB · 30 Days)",
+  plus_monthly: "Plus · US Static ISP (20 GB · 30 Days)",
+  pro_monthly: "Pro · UK & Multi-Region (30 GB · 30 Days)",
+  standard_yearly: "Standard · US (180 GB · 365 Days)",
+  plus_yearly: "Plus · US Static ISP (240 GB · 365 Days)",
+  pro_yearly: "Pro · Multi-Region (360 GB · 365 Days)",
 };
+
+const VPN_COUNTRIES: VpnCountryFilter[] = [
+  "All",
+  "United States (US)",
+  "United Kingdom (UK)",
+  "Multi-Region",
+];
 
 const YEARLY_PRICING_PLANS = [
   {
     id: "standard",
     planType: "standard_yearly" as VpnPlanType,
     name: "Standard",
+    country: "United States (US)" as const,
+    routeBadge: "US WireGuard Route",
     priceNgn: 39990,
     priceDisplay: "₦39,990",
-    billingPeriod: "Yearly (365 Days)",
+    billingPeriod: "Yearly (180 GB Pool)",
     billingLabel: "Billed once per year · Save 2 months",
     summary:
-      "Full-year encrypted WireGuard access for everyday browsing and stable private connections.",
+      "Full-year US WireGuard access with 180 GB annual data pool for everyday browsing and steady sessions.",
     features: [
-      "12 months private WireGuard VPN access",
-      "Residential-grade encrypted tunnel",
+      "Exit Country: United States (US)",
+      "180 GB annual data pool (365 days)",
       "Android, iOS & Windows setup support",
       "Priority email & WhatsApp assistance",
     ],
-    preCheckoutNote: "Instant WireGuard config delivery upon payment.",
+    preCheckoutNote: "Instant US WireGuard config & data pool upon payment.",
   },
   {
     id: "plus",
     planType: "plus_yearly" as VpnPlanType,
     name: "Plus",
+    country: "United States (US)" as const,
+    routeBadge: "US Static ISP Route",
     priceNgn: 69990,
     priceDisplay: "₦69,990",
-    billingPeriod: "Yearly (365 Days)",
+    billingPeriod: "Yearly (240 GB Pool)",
     billingLabel: "Billed once per year · Most Popular",
     summary:
-      "High-speed annual VPN protection built for heavy streaming, remote work, and multi-session stability.",
+      "High-allocation US static/residential routing built for consistent remote sessions and survey/annotation work.",
     features: [
-      "12 months high-speed WireGuard access",
-      "Enhanced low-latency routing",
-      "Android, iOS & Windows support",
+      "Exit Country: United States (US)",
+      "240 GB annual data pool (365 days)",
+      "Consistent US session stability",
       "Fast key replacement & priority support",
     ],
-    preCheckoutNote: "Instant WireGuard config delivery upon payment.",
+    preCheckoutNote: "Instant US WireGuard config & data pool upon payment.",
   },
   {
     id: "pro",
     planType: "pro_yearly" as VpnPlanType,
     name: "Pro",
+    country: "Multi-Region" as const,
+    routeBadge: "Multi-Region Pool",
     priceNgn: 99990,
     priceDisplay: "₦99,990",
-    billingPeriod: "Yearly (365 Days)",
+    billingPeriod: "Yearly (360 GB Pool)",
     billingLabel: "Billed once per year · Maximum Tier",
     summary:
-      "Top-tier annual bandwidth and dedicated priority support for power users and business workflows.",
+      "Maximum annual data pool across stocked regions on a single server setup for power users and daily workflows.",
     features: [
-      "12 months maximum-priority WireGuard access",
-      "Dedicated high-throughput residential route",
+      "Exit Country: Multi-Region (Stocked)",
+      "360 GB annual data pool (365 days)",
       "All platforms supported (Android, iOS, Windows)",
       "Direct 1-on-1 WhatsApp onboarding support",
     ],
-    preCheckoutNote: "Instant WireGuard config delivery upon payment.",
+    preCheckoutNote: "Instant WireGuard config & data pool upon payment.",
   },
 ];
 
@@ -267,7 +332,7 @@ const VIRTUAL_NUMBERS = [
     iso: "us",
     dialCode: "+1",
     sampleNumber: "+1 (646) 512-8830",
-    service: "OpenAI / ChatGPT / Claude",
+    service: "OpenAI / ChatGPT / Claude / Discord",
     type: "One-Time OTP",
     delivery: "Fast SMS Delivery",
     successRate: "US Carrier Route",
@@ -280,7 +345,7 @@ const VIRTUAL_NUMBERS = [
     iso: "ca",
     dialCode: "+1",
     sampleNumber: "+1 (416) 555-0194",
-    service: "Google / Gmail / YouTube",
+    service: "Google / Gmail / YouTube / X",
     type: "One-Time OTP",
     delivery: "Fast SMS Delivery",
     successRate: "CA Carrier Route",
@@ -293,7 +358,7 @@ const VIRTUAL_NUMBERS = [
     iso: "gb",
     dialCode: "+44",
     sampleNumber: "+44 7911 123456",
-    service: "All Apps (30-Day Rental)",
+    service: "All Platforms (30-Day Rental)",
     type: "Private Dedicated Line",
     delivery: "Active for 30 Days",
     successRate: "30-Day Rental",
@@ -306,12 +371,38 @@ const VIRTUAL_NUMBERS = [
     iso: "nl",
     dialCode: "+31",
     sampleNumber: "+31 6 2489 1104",
-    service: "PayPal / Wise / Stripe OTP",
+    service: "PayPal / Wise / Stripe / TikTok OTP",
     type: "One-Time OTP",
     delivery: "Fast SMS Delivery",
     successRate: "EU Carrier Route",
     price: 3500,
     tag: "EU Line",
+  },
+  {
+    code: "sms-de-social",
+    country: "Germany",
+    iso: "de",
+    dialCode: "+49",
+    sampleNumber: "+49 151 2345 6789",
+    service: "Instagram / Facebook / Microsoft",
+    type: "One-Time OTP",
+    delivery: "Fast SMS Delivery",
+    successRate: "DE Carrier Route",
+    price: 3200,
+    tag: "DE Line",
+  },
+  {
+    code: "sms-ng-local",
+    country: "Nigeria",
+    iso: "ng",
+    dialCode: "+234",
+    sampleNumber: "+234 809 412 8820",
+    service: "WhatsApp / Paystack / Local Apps",
+    type: "One-Time OTP",
+    delivery: "Fast SMS Delivery",
+    successRate: "NG Carrier Route",
+    price: 1800,
+    tag: "NG Line",
   },
 ];
 
@@ -324,11 +415,13 @@ const BOOK_NICHES: BookNiche[] = [
   "Novel",
 ];
 
+// Public-domain / non-copyrighted classics
 const DIGITAL_PRODUCTS: {
   code: string;
   title: string;
   author: string;
   niche: Exclude<BookNiche, "All">;
+  license: string;
   format: string;
   rating: string;
   price: number;
@@ -336,168 +429,183 @@ const DIGITAL_PRODUCTS: {
   gradient: string;
 }[] = [
     {
-      code: "book-fin-1",
-      title: "The Psychology of Money",
-      author: "Morgan Housel",
-      niche: "Finance",
-      format: "PDF + EPUB",
-      rating: "4.9",
-      price: 2500,
-      cover: "https://covers.openlibrary.org/b/isbn/9780857197689-M.jpg",
-      gradient: "from-emerald-900/60 to-[#050811]",
-    },
-    {
-      code: "book-fin-2",
-      title: "Rich Dad Poor Dad",
-      author: "Robert T. Kiyosaki",
-      niche: "Finance",
-      format: "PDF + EPUB",
-      rating: "4.8",
-      price: 2000,
-      cover: "https://covers.openlibrary.org/b/isbn/9781612680194-M.jpg",
-      gradient: "from-teal-900/60 to-[#050811]",
-    },
-    {
-      code: "book-fin-3",
+      code: "pd-fin-1",
       title: "The Richest Man in Babylon",
-      author: "George S. Clason",
+      author: "George S. Clason (1926)",
       niche: "Finance",
+      license: "Public Domain",
       format: "PDF + EPUB",
       rating: "4.9",
       price: 1800,
       cover: "https://covers.openlibrary.org/b/isbn/9780451205360-M.jpg",
-      gradient: "from-amber-900/50 to-[#050811]",
+      gradient: "from-emerald-900/60 to-[#050811]",
     },
     {
-      code: "book-hlt-1",
-      title: "Why We Sleep",
-      author: "Matthew Walker",
-      niche: "Health",
+      code: "pd-fin-2",
+      title: "The Wealth of Nations (Selected Books)",
+      author: "Adam Smith (1776)",
+      niche: "Finance",
+      license: "Public Domain",
       format: "PDF + EPUB",
       rating: "4.8",
-      price: 2500,
-      cover: "https://covers.openlibrary.org/b/isbn/9781501144318-M.jpg",
-      gradient: "from-cyan-900/60 to-[#050811]",
-    },
-    {
-      code: "book-hlt-2",
-      title: "Outlive: The Science & Art of Longevity",
-      author: "Peter Attia, MD",
-      niche: "Health",
-      format: "PDF + EPUB",
-      rating: "4.9",
-      price: 3000,
-      cover: "https://covers.openlibrary.org/b/isbn/9780593236598-M.jpg",
+      price: 2000,
+      cover: "https://covers.openlibrary.org/b/olid/OL7126402M-M.jpg",
       gradient: "from-teal-900/60 to-[#050811]",
     },
     {
-      code: "book-hlt-3",
-      title: "How Not to Die",
-      author: "Dr. Michael Greger",
-      niche: "Health",
+      code: "pd-fin-3",
+      title: "The Science of Getting Rich",
+      author: "Wallace D. Wattles (1910)",
+      niche: "Finance",
+      license: "Public Domain",
       format: "PDF + EPUB",
       rating: "4.8",
-      price: 2500,
-      cover: "https://covers.openlibrary.org/b/isbn/9781250066114-M.jpg",
+      price: 1500,
+      cover: "https://covers.openlibrary.org/b/olid/OL7064459M-M.jpg",
+      gradient: "from-amber-900/50 to-[#050811]",
+    },
+    {
+      code: "pd-hlt-1",
+      title: "How to Live: Rules for Healthful Living",
+      author: "Irving Fisher & Eugene Lyman Fisk (1915)",
+      niche: "Health",
+      license: "Public Domain",
+      format: "PDF + EPUB",
+      rating: "4.7",
+      price: 1800,
+      cover: "https://covers.openlibrary.org/b/olid/OL7051942M-M.jpg",
+      gradient: "from-cyan-900/60 to-[#050811]",
+    },
+    {
+      code: "pd-hlt-2",
+      title: "The Art of Longevity",
+      author: "Herman Lorinczi (1900)",
+      niche: "Health",
+      license: "Public Domain",
+      format: "PDF + EPUB",
+      rating: "4.7",
+      price: 1600,
+      cover: "https://covers.openlibrary.org/b/olid/OL23314586M-M.jpg",
+      gradient: "from-teal-900/60 to-[#050811]",
+    },
+    {
+      code: "pd-hlt-3",
+      title: "Power Through Repose",
+      author: "Annie Payson Call (1891)",
+      niche: "Health",
+      license: "Public Domain",
+      format: "PDF + EPUB",
+      rating: "4.8",
+      price: 1500,
+      cover: "https://covers.openlibrary.org/b/olid/OL7183294M-M.jpg",
       gradient: "from-emerald-950/80 to-[#050811]",
     },
     {
-      code: "book-dev-1",
-      title: "Atomic Habits",
-      author: "James Clear",
+      code: "pd-dev-1",
+      title: "As a Man Thinketh",
+      author: "James Allen (1903)",
       niche: "Self-Development",
+      license: "Public Domain",
       format: "PDF + EPUB",
       rating: "4.9",
-      price: 2500,
-      cover: "https://covers.openlibrary.org/b/isbn/9780735211292-M.jpg",
+      price: 1500,
+      cover: "https://covers.openlibrary.org/b/olid/OL7044318M-M.jpg",
       gradient: "from-[#0c162d] to-[#050811]",
     },
     {
-      code: "book-dev-2",
-      title: "Deep Work",
-      author: "Cal Newport",
+      code: "pd-dev-2",
+      title: "Self-Reliance & Selected Essays",
+      author: "Ralph Waldo Emerson (1841)",
       niche: "Self-Development",
+      license: "Public Domain",
       format: "PDF + EPUB",
       rating: "4.8",
-      price: 2200,
-      cover: "https://covers.openlibrary.org/b/isbn/9781455586691-M.jpg",
+      price: 1800,
+      cover: "https://covers.openlibrary.org/b/olid/OL7062381M-M.jpg",
       gradient: "from-slate-900/80 to-[#050811]",
     },
     {
-      code: "book-dev-3",
-      title: "The 7 Habits of Highly Effective People",
-      author: "Stephen R. Covey",
+      code: "pd-dev-3",
+      title: "Meditations",
+      author: "Marcus Aurelius (180 AD)",
       niche: "Self-Development",
+      license: "Public Domain",
       format: "PDF + EPUB",
       rating: "4.9",
-      price: 2500,
-      cover: "https://covers.openlibrary.org/b/isbn/9780743269513-M.jpg",
+      price: 1900,
+      cover: "https://covers.openlibrary.org/b/olid/OL7143589M-M.jpg",
       gradient: "from-teal-950/80 to-[#050811]",
     },
     {
-      code: "book-gos-1",
-      title: "The Purpose Driven Life",
-      author: "Rick Warren",
+      code: "pd-gos-1",
+      title: "The Pilgrim's Progress",
+      author: "John Bunyan (1678)",
       niche: "Gospel",
-      format: "PDF + EPUB",
-      rating: "4.9",
-      price: 2000,
-      cover: "https://covers.openlibrary.org/b/isbn/9780310205715-M.jpg",
-      gradient: "from-amber-950/70 to-[#050811]",
-    },
-    {
-      code: "book-gos-2",
-      title: "Good Morning, Holy Spirit",
-      author: "Benny Hinn",
-      niche: "Gospel",
-      format: "PDF + EPUB",
-      rating: "4.9",
-      price: 2000,
-      cover: "https://covers.openlibrary.org/b/isbn/9780785271765-M.jpg",
-      gradient: "from-emerald-950/70 to-[#050811]",
-    },
-    {
-      code: "book-gos-3",
-      title: "Battlefield of the Mind",
-      author: "Joyce Meyer",
-      niche: "Gospel",
-      format: "PDF + EPUB",
-      rating: "4.8",
-      price: 2200,
-      cover: "https://covers.openlibrary.org/b/isbn/9780446691093-M.jpg",
-      gradient: "from-[#0c162d] to-[#050811]",
-    },
-    {
-      code: "book-nov-1",
-      title: "The Alchemist",
-      author: "Paulo Coelho",
-      niche: "Novel",
-      format: "PDF + EPUB",
-      rating: "4.9",
-      price: 2000,
-      cover: "https://covers.openlibrary.org/b/isbn/9780062315007-M.jpg",
-      gradient: "from-amber-950/60 to-[#050811]",
-    },
-    {
-      code: "book-nov-2",
-      title: "Things Fall Apart",
-      author: "Chinua Achebe",
-      niche: "Novel",
+      license: "Public Domain",
       format: "PDF + EPUB",
       rating: "4.9",
       price: 1800,
-      cover: "https://covers.openlibrary.org/b/isbn/9780385474542-M.jpg",
+      cover: "https://covers.openlibrary.org/b/olid/OL7119835M-M.jpg",
+      gradient: "from-amber-950/70 to-[#050811]",
+    },
+    {
+      code: "pd-gos-2",
+      title: "The Imitation of Christ",
+      author: "Thomas à Kempis (1418)",
+      niche: "Gospel",
+      license: "Public Domain",
+      format: "PDF + EPUB",
+      rating: "4.9",
+      price: 1800,
+      cover: "https://covers.openlibrary.org/b/olid/OL7095124M-M.jpg",
+      gradient: "from-emerald-950/70 to-[#050811]",
+    },
+    {
+      code: "pd-gos-3",
+      title: "My Utmost for His Highest",
+      author: "Oswald Chambers (1927)",
+      niche: "Gospel",
+      license: "Public Domain",
+      format: "PDF + EPUB",
+      rating: "4.9",
+      price: 2000,
+      cover: "https://covers.openlibrary.org/b/olid/OL7058412M-M.jpg",
+      gradient: "from-[#0c162d] to-[#050811]",
+    },
+    {
+      code: "pd-nov-1",
+      title: "Pride and Prejudice",
+      author: "Jane Austen (1813)",
+      niche: "Novel",
+      license: "Public Domain",
+      format: "PDF + EPUB",
+      rating: "4.9",
+      price: 1700,
+      cover: "https://covers.openlibrary.org/b/olid/OL7051218M-M.jpg",
+      gradient: "from-amber-950/60 to-[#050811]",
+    },
+    {
+      code: "pd-nov-2",
+      title: "The Count of Monte Cristo",
+      author: "Alexandre Dumas (1844)",
+      niche: "Novel",
+      license: "Public Domain",
+      format: "PDF + EPUB",
+      rating: "4.9",
+      price: 2200,
+      cover: "https://covers.openlibrary.org/b/olid/OL7087421M-M.jpg",
       gradient: "from-rose-950/60 to-[#050811]",
     },
     {
-      code: "book-nov-3",
-      title: "Purple Hibiscus",
-      author: "Chimamanda Ngozi Adichie",
+      code: "pd-nov-3",
+      title: "Great Expectations",
+      author: "Charles Dickens (1861)",
       niche: "Novel",
+      license: "Public Domain",
       format: "PDF + EPUB",
       rating: "4.8",
-      price: 2200,
-      cover: "https://covers.openlibrary.org/b/isbn/9781616202415-M.jpg",
+      price: 1800,
+      cover: "https://covers.openlibrary.org/b/olid/OL7079325M-M.jpg",
       gradient: "from-teal-950/70 to-[#050811]",
     },
   ];
@@ -519,13 +627,13 @@ const NAV_ITEMS: {
     },
     {
       id: "subscriptions",
-      label: "Subscriptions",
+      label: "Data & Plans",
       icon: CreditCard,
       accent: "text-orange-400",
     },
     {
       id: "products",
-      label: "Digital Products",
+      label: "Public Domain Books",
       icon: BookOpen,
       accent: "text-emerald-300",
     },
@@ -537,13 +645,13 @@ const NAV_ITEMS: {
     },
     {
       id: "billing",
-      label: "Billing & Orders",
+      label: "Orders & Receipts",
       icon: Receipt,
       accent: "text-slate-300",
     },
     {
       id: "referrals",
-      label: "Referral Program",
+      label: "Referral Rewards",
       icon: Users,
       accent: "text-[#00F59B]",
     },
@@ -599,10 +707,13 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
+  const [selectedCountry, setSelectedCountry] =
+    useState<VpnCountryFilter>("All");
   const [menuOpen, setMenuOpen] = useState(false);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [assignedKeys, setAssignedKeys] = useState<AssignedKeyRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [smsSearchQuery, setSmsSearchQuery] = useState("");
   const [payingCode, setPayingCode] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
@@ -754,7 +865,7 @@ function DashboardPage() {
                 },
               });
               setStatusMessage(
-                `Payment confirmed for ${name}. Your WireGuard configuration has been assigned.`
+                `Payment confirmed for ${name}. Your WireGuard configuration and data bundle are ready.`
               );
               await fetchOrders(user.id);
               setActiveTab("vpn");
@@ -818,10 +929,7 @@ function DashboardPage() {
     ? "connected"
     : "disconnected";
   const statusIndicator = getConnectionIndicator(connectionStatus);
-  const totalSpent = orders.reduce(
-    (sum, o) => sum + (Number(o.amount_ngn) || 0),
-    0
-  );
+
   const rawPlanKey =
     latestAssignedKey?.plan_type ||
     latestKeyOrder?.plan_type ||
@@ -830,27 +938,77 @@ function DashboardPage() {
   const currentPlanName =
     PLAN_LABELS[rawPlanKey] ||
     rawPlanKey ||
-    (activeKey ? "Active VPN Plan" : "No Active Plan");
+    (activeKey ? "Active Data Plan" : "No Active Data Plan");
+
+  const limitBytes =
+    latestAssignedKey?.bandwidth_limit_bytes ??
+    latestKeyOrder?.bandwidth_limit_bytes ??
+    null;
+  const usedBytes =
+    latestAssignedKey?.bandwidth_used_bytes ??
+    latestKeyOrder?.bandwidth_used_bytes ??
+    null;
+
+  const dataAllowanceGb = getPlanAllowanceGb(
+    rawPlanKey,
+    Boolean(activeKey),
+    limitBytes
+  );
+  const dataUsedGb = getUsedGb(Boolean(activeKey), usedBytes, dataAllowanceGb);
+  const dataRemainingGb = Math.max(
+    0,
+    Number((dataAllowanceGb - dataUsedGb).toFixed(2))
+  );
+  const usagePercent =
+    dataAllowanceGb > 0
+      ? Math.min(100, Math.round((dataUsedGb / dataAllowanceGb) * 100))
+      : 0;
+  const daysRemaining = getDaysRemaining(activeExpiresAt, Boolean(activeKey));
+
   const referralCode = `EA-${(user?.id || "MEMBER").slice(0, 6).toUpperCase()}`;
 
   const monthlyPlans = PRICING_PLANS.map((plan) => {
     const tier = plan.id as "standard" | "plus" | "pro";
+    const defaultGb = tier === "pro" ? 30 : tier === "plus" ? 20 : 15;
+    const country: VpnCountryFilter =
+      tier === "pro"
+        ? "United Kingdom (UK)"
+        : "United States (US)";
+    const routeBadge =
+      tier === "pro"
+        ? "UK WireGuard Route"
+        : tier === "plus"
+          ? "US Static ISP Route"
+          : "US WireGuard Route";
     return {
       id: plan.id,
       planType: `${tier}_monthly` as VpnPlanType,
       name: plan.name,
+      country,
+      routeBadge,
       priceNgn: parsePriceNgn(plan.priceDisplay),
       priceDisplay: plan.priceDisplay,
-      billingPeriod: "Monthly (30 Days)",
+      billingPeriod: `Monthly (${defaultGb} GB)`,
       billingLabel: plan.billingLabel,
       summary: plan.summary,
-      features: plan.features,
+      features: [`Exit Country: ${country}`, ...plan.features],
       preCheckoutNote: plan.preCheckoutNote,
     };
   });
 
-  const displayedPlans =
-    billingCycle === "monthly" ? monthlyPlans : YEARLY_PRICING_PLANS;
+  const displayedPlans = (
+    billingCycle === "monthly" ? monthlyPlans : YEARLY_PRICING_PLANS
+  ).filter((p) => {
+    const matchesCountry =
+      selectedCountry === "All" || p.country === selectedCountry;
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      p.name.toLowerCase().includes(q) ||
+      p.country.toLowerCase().includes(q) ||
+      p.routeBadge.toLowerCase().includes(q);
+    return matchesCountry && matchesSearch;
+  });
 
   const filteredBooks = DIGITAL_PRODUCTS.filter((b) => {
     const matchesNiche = selectedNiche === "All" || b.niche === selectedNiche;
@@ -859,16 +1017,20 @@ function DashboardPage() {
       !q ||
       b.title.toLowerCase().includes(q) ||
       b.author.toLowerCase().includes(q) ||
-      b.niche.toLowerCase().includes(q);
+      b.niche.toLowerCase().includes(q) ||
+      b.license.toLowerCase().includes(q);
     return matchesNiche && matchesQuery;
   });
 
+  const combinedSmsQuery = (smsSearchQuery || searchQuery).trim().toLowerCase();
   const filteredNumbers = VIRTUAL_NUMBERS.filter((n) => {
-    const q = searchQuery.trim().toLowerCase();
+    if (!combinedSmsQuery) return true;
     return (
-      !q ||
-      n.country.toLowerCase().includes(q) ||
-      n.service.toLowerCase().includes(q)
+      n.country.toLowerCase().includes(combinedSmsQuery) ||
+      n.dialCode.toLowerCase().includes(combinedSmsQuery) ||
+      n.service.toLowerCase().includes(combinedSmsQuery) ||
+      n.type.toLowerCase().includes(combinedSmsQuery) ||
+      n.tag.toLowerCase().includes(combinedSmsQuery)
     );
   });
 
@@ -938,7 +1100,7 @@ function DashboardPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search VPN, SMS numbers, e-books..."
+              placeholder="Search country, VPN, SMS numbers, books..."
               className="w-full rounded-full border border-white/[0.08] bg-[#050A15] py-2 pl-10 pr-4 text-xs text-white placeholder-slate-500 transition focus:border-[#00F59B]/50 focus:outline-none"
             />
           </div>
@@ -1056,19 +1218,28 @@ function DashboardPage() {
                 <div className="min-w-0">
                   <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/25 bg-amber-400/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-300">
                     <Activity className="h-3 w-3" />
-                    Account Control Center
+                    Bandwidth &amp; Tunnel Control
                   </div>
                   <h1 className="mt-2.5 break-words text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
                     Welcome back,{" "}
                     <span className="text-[#00F59B]">{displayName}</span>
                   </h1>
                   <p className="mt-1 text-xs text-slate-400 sm:text-sm">
-                    Your VPN setup, subscriptions, and digital tools in one
-                    place.
+                    Track remaining data, active WireGuard access, and stocked
+                    country bundles in one view.
                   </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => user && void fetchOrders(user.id)}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#050A15] px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-[#00F59B]/40"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5 text-[#00F59B]" />
+                    Sync Usage
+                  </button>
+
                   <div
                     className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${statusIndicator.pillClass}`}
                   >
@@ -1079,8 +1250,8 @@ function DashboardPage() {
                       <p className="text-xs font-bold">{statusIndicator.label}</p>
                       <p className="text-[11px] text-slate-300">
                         {activeKey
-                          ? "VPN key active in My VPN"
-                          : "No active VPN configuration yet"}
+                          ? `${dataRemainingGb} GB remaining`
+                          : "No active data bundle yet"}
                       </p>
                     </div>
                   </div>
@@ -1110,7 +1281,7 @@ function DashboardPage() {
                 <div className="rounded-2xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-5 shadow-[0_14px_40px_rgba(0,0,0,0.75)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-amber-400/35 hover:shadow-[0_18px_45px_rgba(245,158,11,0.12)]">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-slate-400">
-                      Subscription Plan
+                      Active Bundle
                     </span>
                     <CreditCard className="h-4 w-4 text-amber-400" />
                   </div>
@@ -1122,40 +1293,42 @@ function DashboardPage() {
                     onClick={() => selectTab("subscriptions")}
                     className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-[#00F59B] hover:underline"
                   >
-                    Manage Subscriptions <ArrowRight className="h-3 w-3" />
+                    Choose Country / Bundle{" "}
+                    <ArrowRight className="h-3 w-3" />
                   </button>
                 </div>
 
                 <div className="rounded-2xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-5 shadow-[0_14px_40px_rgba(0,0,0,0.75)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-emerald-400/35">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-slate-400">
-                      Total Spent
+                      Data Remaining
                     </span>
-                    <Receipt className="h-4 w-4 text-emerald-400" />
+                    <Gauge className="h-4 w-4 text-[#00F59B]" />
                   </div>
                   <p className="mt-3 text-xl font-extrabold text-white">
-                    ₦{totalSpent.toLocaleString()}
+                    {dataRemainingGb} GB
                   </p>
                   <p className="mt-0.5 text-xs text-slate-400">
-                    Lifetime ({orders.length}{" "}
-                    {orders.length === 1 ? "order" : "orders"})
+                    {dataUsedGb} GB used of {dataAllowanceGb} GB
                   </p>
                 </div>
 
                 <div className="rounded-2xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-5 shadow-[0_14px_40px_rgba(0,0,0,0.75)] backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-amber-400/35">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-slate-400">
-                      Referral Bonus
+                      Bonus Data Rewards
                     </span>
                     <Users className="h-4 w-4 text-amber-400" />
                   </div>
-                  <p className="mt-3 text-xl font-extrabold text-white">₦0</p>
+                  <p className="mt-3 text-xl font-extrabold text-white">
+                    +0 GB
+                  </p>
                   <button
                     type="button"
                     onClick={() => selectTab("referrals")}
                     className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-amber-300 hover:underline"
                   >
-                    Invite Friends <ArrowRight className="h-3 w-3" />
+                    Earn Bonus Data <ArrowRight className="h-3 w-3" />
                   </button>
                 </div>
               </div>
@@ -1164,13 +1337,13 @@ function DashboardPage() {
             <div className="grid gap-6 lg:grid-cols-3">
               <ScrollFloat delay={120} className="lg:col-span-2">
                 <div className="flex h-full flex-col justify-between rounded-3xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)] backdrop-blur-md">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <h2 className="text-base font-bold text-white">
-                        Connection Summary
+                        Bandwidth Usage Meter
                       </h2>
                       <p className="text-xs text-slate-400">
-                        Account &amp; service readiness overview
+                        Live data pool allocation &amp; cycle status
                       </p>
                     </div>
                     <button
@@ -1182,46 +1355,29 @@ function DashboardPage() {
                     </button>
                   </div>
 
-                  <div className="my-6 rounded-2xl border border-white/[0.06] bg-[#050A15] p-4">
-                    <svg
-                      viewBox="0 0 400 90"
-                      className="h-24 w-full overflow-visible"
-                      aria-label="Service status wave"
-                    >
-                      <defs>
-                        <linearGradient
-                          id="eaWaveGrad"
-                          x1="0%"
-                          y1="0%"
-                          x2="100%"
-                          y2="0%"
-                        >
-                          <stop
-                            offset="0%"
-                            stopColor="#00F59B"
-                            stopOpacity="0.2"
-                          />
-                          <stop
-                            offset="55%"
-                            stopColor="#00F59B"
-                            stopOpacity="0.95"
-                          />
-                          <stop
-                            offset="100%"
-                            stopColor="#F59E0B"
-                            stopOpacity="0.85"
-                          />
-                        </linearGradient>
-                      </defs>
-                      <path
-                        d="M 0 68 Q 65 62, 130 46 T 260 32 T 400 22"
-                        fill="none"
-                        stroke="url(#eaWaveGrad)"
-                        strokeWidth="3"
-                        strokeLinecap="round"
+                  <div className="my-5 space-y-3 rounded-2xl border border-white/[0.06] bg-[#050A15] p-4">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-slate-200">
+                        {dataUsedGb} GB Used
+                      </span>
+                      <span className="font-bold text-[#00F59B]">
+                        {dataRemainingGb} GB Left ({100 - usagePercent}%)
+                      </span>
+                    </div>
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-white/[0.07]">
+                      <div
+                        style={{ width: `${usagePercent}%` }}
+                        className="h-full rounded-full bg-gradient-to-r from-[#00F59B] to-emerald-400 transition-all duration-500"
                       />
-                      <circle cx="260" cy="32" r="4.5" fill="#00F59B" />
-                    </svg>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                      <span>Total Pool: {dataAllowanceGb} GB</span>
+                      <span>
+                        {activeKey
+                          ? `${daysRemaining} days left in cycle`
+                          : "Awaiting activation"}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 border-t border-white/[0.07] pt-4 text-xs">
@@ -1283,7 +1439,7 @@ function DashboardPage() {
                       >
                         <span className="flex items-center gap-2.5">
                           <BookOpen className="h-4 w-4 text-emerald-300" />
-                          Digital E-Books Store
+                          Public Domain Books
                         </span>
                         <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
                       </button>
@@ -1307,7 +1463,8 @@ function DashboardPage() {
                 <div>
                   <h2 className="text-xl font-extrabold text-white">My VPN</h2>
                   <p className="text-xs text-slate-400">
-                    Your active VPN credentials and setup steps.
+                    Your active WireGuard credentials, data balance, and setup
+                    steps.
                   </p>
                 </div>
                 <span
@@ -1318,6 +1475,24 @@ function DashboardPage() {
                   />
                   {statusIndicator.label}
                 </span>
+              </div>
+
+              <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <span className="font-semibold text-white">
+                    Data Balance: {dataRemainingGb} GB remaining of{" "}
+                    {dataAllowanceGb} GB
+                  </span>
+                  <span className="text-slate-400">
+                    {activeKey ? `${daysRemaining} days left` : "Inactive"}
+                  </span>
+                </div>
+                <div className="mt-2.5 h-2.5 w-full overflow-hidden rounded-full bg-white/[0.07]">
+                  <div
+                    style={{ width: `${usagePercent}%` }}
+                    className="h-full rounded-full bg-[#00F59B] transition-all duration-500"
+                  />
+                </div>
               </div>
 
               {activeKey ? (
@@ -1358,15 +1533,16 @@ function DashboardPage() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-5 text-sm text-slate-300">
-                  No active VPN key assigned yet. Choose a subscription plan to
-                  activate access.
+                  No active VPN key assigned yet. Select your preferred exit
+                  country and data bundle to activate access.
                   <div className="mt-3">
                     <button
                       type="button"
                       onClick={() => selectTab("subscriptions")}
                       className="inline-flex items-center gap-2 rounded-xl bg-[#00F59B] px-4 py-2 text-xs font-bold text-[#040812]"
                     >
-                      View VPN Plans <ArrowRight className="h-3.5 w-3.5" />
+                      Select Country &amp; Bundle{" "}
+                      <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
@@ -1411,66 +1587,97 @@ function DashboardPage() {
         {activeTab === "sms" && (
           <ScrollFloat>
             <div className="space-y-5">
-              <div>
-                <h2 className="text-xl font-extrabold text-white">
-                  Virtual SMS Numbers
-                </h2>
-                <p className="text-xs text-slate-400">
-                  Receive verification codes on temporary or 30-day rental
-                  numbers.
-                </p>
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-extrabold text-white">
+                    Virtual SMS Numbers
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    Search across all countries, dial codes, and platforms for
+                    verification codes or 30-day rentals.
+                  </p>
+                </div>
+
+                <div className="relative w-full sm:w-80">
+                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={smsSearchQuery}
+                    onChange={(e) => setSmsSearchQuery(e.target.value)}
+                    placeholder="Search country (US, UK, NG) or platform (WhatsApp, OpenAI)..."
+                    className="w-full rounded-xl border border-white/[0.1] bg-[#050A15] py-2.5 pl-10 pr-8 text-xs text-white placeholder-slate-500 transition focus:border-[#00F59B]/50 focus:outline-none"
+                  />
+                  {smsSearchQuery && (
+                    <button
+                      type="button"
+                      aria-label="Clear SMS Search"
+                      onClick={() => setSmsSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredNumbers.map((num) => (
-                  <div
-                    key={num.code}
-                    className="flex flex-col justify-between rounded-2xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-5 shadow-[0_14px_40px_rgba(0,0,0,0.75)]"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-bold text-white">
-                          {num.country} ({num.dialCode})
-                        </span>
-                        <span className="rounded-full border border-amber-400/25 bg-amber-400/10 px-2.5 py-0.5 text-[10px] font-semibold text-amber-300">
-                          {num.tag}
-                        </span>
+              {filteredNumbers.length === 0 ? (
+                <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-6 text-center text-xs text-slate-400">
+                  No numbers matched &ldquo;{smsSearchQuery || searchQuery}&rdquo;. Try
+                  searching another country or platform like WhatsApp, Telegram,
+                  OpenAI, or 30-Day Rental.
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredNumbers.map((num) => (
+                    <div
+                      key={num.code}
+                      className="flex flex-col justify-between rounded-2xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-5 shadow-[0_14px_40px_rgba(0,0,0,0.75)]"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-bold text-white">
+                            {num.country} ({num.dialCode})
+                          </span>
+                          <span className="rounded-full border border-amber-400/25 bg-amber-400/10 px-2.5 py-0.5 text-[10px] font-semibold text-amber-300">
+                            {num.tag}
+                          </span>
+                        </div>
+                        <p className="mt-2 font-mono text-xs text-[#00F59B]">
+                          {num.sampleNumber}
+                        </p>
+                        <p className="mt-2 text-xs font-semibold text-slate-200">
+                          {num.service}
+                        </p>
+                        <p className="mt-1 text-[11px] text-slate-400">
+                          {num.type} · {num.delivery}
+                        </p>
                       </div>
-                      <p className="mt-2 font-mono text-xs text-[#00F59B]">
-                        {num.sampleNumber}
-                      </p>
-                      <p className="mt-2 text-xs font-semibold text-slate-200">
-                        {num.service}
-                      </p>
-                      <p className="mt-1 text-[11px] text-slate-400">
-                        {num.type} · {num.delivery}
-                      </p>
-                    </div>
 
-                    <div className="mt-5 flex items-center justify-between border-t border-white/[0.07] pt-3.5">
-                      <span className="text-base font-extrabold text-white">
-                        ₦{num.price.toLocaleString()}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={payingCode === "standard_monthly"}
-                        onClick={() =>
-                          void handleCheckout(
-                            "standard_monthly",
-                            `${num.country} SMS (${num.service})`,
-                            num.price
-                          )
-                        }
-                        className="rounded-xl bg-[#00F59B] px-3.5 py-2 text-xs font-bold text-[#040812] transition hover:opacity-95 disabled:opacity-50"
-                      >
-                        {payingCode === "standard_monthly"
-                          ? "Opening..."
-                          : "Get Number"}
-                      </button>
+                      <div className="mt-5 flex items-center justify-between border-t border-white/[0.07] pt-3.5">
+                        <span className="text-base font-extrabold text-white">
+                          ₦{num.price.toLocaleString()}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={payingCode === "standard_monthly"}
+                          onClick={() =>
+                            void handleCheckout(
+                              "standard_monthly",
+                              `${num.country} SMS (${num.service})`,
+                              num.price
+                            )
+                          }
+                          className="rounded-xl bg-[#00F59B] px-3.5 py-2 text-xs font-bold text-[#040812] transition hover:opacity-95 disabled:opacity-50"
+                        >
+                          {payingCode === "standard_monthly"
+                            ? "Opening..."
+                            : "Get Number"}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </ScrollFloat>
         )}
@@ -1481,11 +1688,12 @@ function DashboardPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-xl font-extrabold text-white">
-                    VPN Subscription Plans
+                    Country &amp; Data Bundles
                   </h2>
                   <p className="text-xs text-slate-400">
-                    Select a plan below to pay securely via Paystack and unlock
-                    your VPN access.
+                    Pick your target exit country and data bundle—all routed
+                    cleanly through your server setup without buying separate
+                    servers per country.
                   </p>
                 </div>
 
@@ -1513,72 +1721,101 @@ function DashboardPage() {
                 </div>
               </div>
 
-              <div className="grid gap-5 md:grid-cols-3">
-                {displayedPlans.map((plan) => {
-                  const isHighlighted = plan.id === "plus";
-                  return (
-                    <div
-                      key={plan.planType}
-                      className={`flex flex-col justify-between rounded-3xl border p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)] ${isHighlighted
-                        ? "border-[#00F59B]/45 bg-gradient-to-b from-[#0D1D34] to-[#060B16]"
-                        : "border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95"
-                        }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-extrabold text-white">
-                            {plan.name}
-                          </h3>
-                          <span className="rounded-full bg-[#00F59B]/15 px-2.5 py-0.5 text-[10px] font-bold text-[#00F59B]">
-                            {plan.billingPeriod}
-                          </span>
-                        </div>
-                        <p className="mt-3 text-2xl font-extrabold text-white">
-                          {plan.priceDisplay}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-400">
-                          {plan.billingLabel}
-                        </p>
-                        <p className="mt-3 text-xs text-slate-300">
-                          {plan.summary}
-                        </p>
-
-                        <ul className="mt-4 space-y-2 text-xs text-slate-300">
-                          {plan.features.map((feat) => (
-                            <li key={feat} className="flex items-start gap-2">
-                              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#00F59B]" />
-                              <span>{feat}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div className="mt-6">
-                        <p className="mb-2 text-[11px] text-slate-400">
-                          {plan.preCheckoutNote}
-                        </p>
-                        <button
-                          type="button"
-                          disabled={payingCode === plan.planType}
-                          onClick={() =>
-                            void handleCheckout(
-                              plan.planType,
-                              `${plan.name} (${plan.billingPeriod})`,
-                              plan.priceNgn
-                            )
-                          }
-                          className="w-full rounded-xl bg-[#00F59B] py-2.5 text-xs font-bold text-[#040812] transition hover:opacity-95 disabled:opacity-50"
-                        >
-                          {payingCode === plan.planType
-                            ? "Launching Paystack..."
-                            : `Get ${plan.name} (${billingCycle === "monthly" ? "Monthly" : "Yearly"
-                            })`}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-slate-400">
+                  Exit Country:
+                </span>
+                {VPN_COUNTRIES.map((country) => (
+                  <button
+                    key={country}
+                    type="button"
+                    onClick={() => setSelectedCountry(country)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${selectedCountry === country
+                      ? "bg-[#00F59B] text-[#040812]"
+                      : "border border-white/[0.08] bg-[#081020] text-slate-300 hover:text-white"
+                      }`}
+                  >
+                    {country}
+                  </button>
+                ))}
               </div>
+
+              {displayedPlans.length === 0 ? (
+                <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-6 text-center text-xs text-slate-400">
+                  No bundles matched the selected country filter in{" "}
+                  {billingCycle} billing. Switch to &ldquo;All&rdquo; or another
+                  country above.
+                </div>
+              ) : (
+                <div className="grid gap-5 md:grid-cols-3">
+                  {displayedPlans.map((plan) => {
+                    const isHighlighted = plan.id === "plus";
+                    return (
+                      <div
+                        key={plan.planType}
+                        className={`flex flex-col justify-between rounded-3xl border p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)] ${isHighlighted
+                          ? "border-[#00F59B]/45 bg-gradient-to-b from-[#0D1D34] to-[#060B16]"
+                          : "border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95"
+                          }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="text-lg font-extrabold text-white">
+                              {plan.name}
+                            </h3>
+                            <span className="rounded-full bg-[#00F59B]/15 px-2.5 py-0.5 text-[10px] font-bold text-[#00F59B]">
+                              {plan.routeBadge}
+                            </span>
+                          </div>
+                          <p className="mt-1.5 text-[11px] font-semibold text-amber-300">
+                            Country: {plan.country}
+                          </p>
+                          <p className="mt-2 text-2xl font-extrabold text-white">
+                            {plan.priceDisplay}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            {plan.billingPeriod} · {plan.billingLabel}
+                          </p>
+                          <p className="mt-3 text-xs text-slate-300">
+                            {plan.summary}
+                          </p>
+
+                          <ul className="mt-4 space-y-2 text-xs text-slate-300">
+                            {plan.features.map((feat) => (
+                              <li key={feat} className="flex items-start gap-2">
+                                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#00F59B]" />
+                                <span>{feat}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="mt-6">
+                          <p className="mb-2 text-[11px] text-slate-400">
+                            {plan.preCheckoutNote}
+                          </p>
+                          <button
+                            type="button"
+                            disabled={payingCode === plan.planType}
+                            onClick={() =>
+                              void handleCheckout(
+                                plan.planType,
+                                `${plan.name} · ${plan.country} (${plan.billingPeriod})`,
+                                plan.priceNgn
+                              )
+                            }
+                            className="w-full rounded-xl bg-[#00F59B] py-2.5 text-xs font-bold text-[#040812] transition hover:opacity-95 disabled:opacity-50"
+                          >
+                            {payingCode === plan.planType
+                              ? "Launching Paystack..."
+                              : `Get ${plan.name} (${plan.country.split(" ")[0]})`}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </ScrollFloat>
         )}
@@ -1589,11 +1826,11 @@ function DashboardPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-xl font-extrabold text-white">
-                    Digital Products &amp; E-Books
+                    Public Domain Books &amp; Classics
                   </h2>
                   <p className="text-xs text-slate-400">
-                    Browse curated titles across finance, health, growth,
-                    gospel, and fiction.
+                    100% copyright-free public domain editions across finance,
+                    health, growth, gospel, and classics.
                   </p>
                 </div>
 
@@ -1630,9 +1867,14 @@ function DashboardPage() {
                         className="h-20 w-14 shrink-0 rounded-lg border border-white/10 object-cover"
                       />
                       <div className="min-w-0">
-                        <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
-                          {book.niche}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                            {book.niche}
+                          </span>
+                          <span className="rounded-full border border-[#00F59B]/25 bg-[#00F59B]/10 px-2 py-0.5 text-[10px] font-semibold text-[#00F59B]">
+                            {book.license}
+                          </span>
+                        </div>
                         <h3 className="mt-1.5 line-clamp-2 text-sm font-bold text-white">
                           {book.title}
                         </h3>
@@ -1663,7 +1905,7 @@ function DashboardPage() {
                       >
                         {payingCode === "standard_monthly"
                           ? "Opening..."
-                          : "Buy E-Book"}
+                          : "Get Edition"}
                       </button>
                     </div>
                   </div>
@@ -1748,10 +1990,10 @@ function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-extrabold text-white">
-                    Billing &amp; Orders
+                    Orders &amp; Receipts
                   </h2>
                   <p className="text-xs text-slate-400">
-                    Your recorded transactions on EspritAccess.
+                    Confirmed bundle activations on EspritAccess.
                   </p>
                 </div>
                 <button
@@ -1774,8 +2016,8 @@ function DashboardPage() {
                     <thead>
                       <tr className="border-b border-white/[0.08] text-slate-400">
                         <th className="py-2.5 pr-4">Reference</th>
-                        <th className="py-2.5 pr-4">Plan / Item</th>
-                        <th className="py-2.5 pr-4">Amount</th>
+                        <th className="py-2.5 pr-4">Bundle / Item</th>
+                        <th className="py-2.5 pr-4">Date</th>
                         <th className="py-2.5">Status</th>
                       </tr>
                     </thead>
@@ -1792,8 +2034,10 @@ function DashboardPage() {
                               order.plan_type ||
                               "Order"}
                           </td>
-                          <td className="py-3 pr-4">
-                            ₦{(Number(order.amount_ngn) || 0).toLocaleString()}
+                          <td className="py-3 pr-4 text-slate-400">
+                            {order.created_at
+                              ? new Date(order.created_at).toLocaleDateString()
+                              : "Confirmed"}
                           </td>
                           <td className="py-3">
                             <span className="rounded-full bg-[#00F59B]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#00F59B]">
@@ -1816,16 +2060,17 @@ function DashboardPage() {
           <ScrollFloat>
             <div className="rounded-3xl border border-white/[0.07] bg-gradient-to-b from-[#0A1324]/90 to-[#060B16]/95 p-6 shadow-[0_14px_40px_rgba(0,0,0,0.75)]">
               <h2 className="text-xl font-extrabold text-white">
-                Referral Program
+                Referral Bonus Data
               </h2>
               <p className="mt-1 text-xs text-slate-400">
-                Share your referral code with friends joining EspritAccess.
+                Share your code with friends—earn bonus data &amp; days when
+                they activate a bundle. No cash wallet or withdrawals.
               </p>
 
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-[#050A15] p-4">
                 <div>
                   <p className="text-[11px] text-slate-400">
-                    Your Referral Code
+                    Your Referral Code (+1 GB Bonus per Referral)
                   </p>
                   <p className="mt-0.5 font-mono text-base font-extrabold text-[#00F59B]">
                     {referralCode}
@@ -1866,7 +2111,7 @@ function DashboardPage() {
                   WhatsApp Support
                 </h2>
                 <p className="mt-1 text-xs text-slate-400">
-                  Reach out directly for quick assistance with orders, VPN setup,
+                  Reach out directly for quick assistance with bundles, VPN setup,
                   or virtual numbers.
                 </p>
                 <a
@@ -1885,8 +2130,7 @@ function DashboardPage() {
                   Email Support
                 </h2>
                 <p className="mt-1 text-xs text-slate-400">
-                  Send detailed questions or billing inquiries to our support
-                  inbox.
+                  Send detailed questions or order inquiries to our support inbox.
                 </p>
                 <a
                   href={`mailto:${SUPPORT_EMAIL}`}
@@ -1979,11 +2223,11 @@ function DashboardPage() {
               <div className="space-y-3 text-xs">
                 <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-4">
                   <p className="font-bold text-[#00F59B]">
-                    Account Dashboard Ready
+                    Bandwidth Dashboard Ready
                   </p>
                   <p className="mt-1 text-slate-400">
-                    Your EspritAccess account is active. Manage VPN keys, SMS
-                    numbers, and digital products anytime.
+                    Your EspritAccess account is active. Track data remaining,
+                    WireGuard keys, and country bundles anytime.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/[0.07] bg-[#050A15] p-4">
