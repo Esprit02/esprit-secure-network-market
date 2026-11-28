@@ -10,16 +10,17 @@ export type VpnPlanType =
   | "plus_yearly"
   | "pro_yearly";
 
-interface ClaimedVaultRow {
-  vault_id: string | null;
-  config_text: string | null;
-  expires_at: string | null;
-}
-
 interface VaultRecord {
   id: string;
   api_key_or_config: string;
-  expires_at: string | null;
+}
+
+interface ProvisionApiResponse {
+  ok?: boolean;
+  config?: string;
+  ip?: string;
+  publicKey?: string;
+  error?: string;
 }
 
 const PLAN_AMOUNTS: Record<VpnPlanType, number> = {
@@ -40,6 +41,10 @@ const PLAN_DURATION_DAYS: Record<VpnPlanType, number> = {
   pro_yearly: 365,
 };
 
+const PROVISION_API_URL = (
+  process.env.VITE_API_URL || "https://api.espritaccess.com.ng"
+).replace(/\/+$/, "");
+
 function getAuthUserId(context: unknown): string {
   const ctx = context as {
     userId?: string;
@@ -50,6 +55,50 @@ function getAuthUserId(context: unknown): string {
     throw new Error("Authenticated user ID missing");
   }
   return userId;
+}
+
+function getAuthUserEmail(context: unknown, fallbackUserId: string): string {
+  const ctx = context as {
+    user?: { email?: string | null };
+    email?: string | null;
+  };
+  const email = ctx.user?.email ?? ctx.email;
+  if (email && email.includes("@")) {
+    return email;
+  }
+  return `${fallbackUserId}@espritaccess.com.ng`;
+}
+
+async function provisionWireGuardConfig(params: {
+  email: string;
+  country?: string;
+}): Promise<string> {
+  const res = await fetch(`${PROVISION_API_URL}/provision`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: params.email,
+      country: params.country || "US",
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(
+      `Provisioning service error (${res.status}): ${errText || "Unable to create WireGuard config"}`,
+    );
+  }
+
+  const payload = (await res.json()) as ProvisionApiResponse;
+  if (payload.ok === false || !payload.config || !payload.config.trim()) {
+    throw new Error(
+      payload.error || "Provisioning service returned an empty WireGuard config",
+    );
+  }
+
+  return payload.config.trim();
 }
 
 export const finalizePaystackOrder = createServerFn({ method: "POST" })
@@ -66,15 +115,19 @@ export const finalizePaystackOrder = createServerFn({ method: "POST" })
           "plus_yearly",
           "pro_yearly",
         ]),
+        country: z.string().min(2).max(10).optional(),
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
     const userId = getAuthUserId(context);
+    const userEmail = getAuthUserEmail(context, userId);
     const expectedAmountNgn = PLAN_AMOUNTS[data.plan_type];
     const expectedKobo = expectedAmountNgn * 100;
     const isSandboxBypass =
       data.reference.startsWith("TEST_") || data.reference.startsWith("test-");
+
+    let paystackCustomerEmail: string | undefined;
 
     if (!isSandboxBypass) {
       const secret = process.env.PAYSTACK_SECRET_KEY;
@@ -104,6 +157,7 @@ export const finalizePaystackOrder = createServerFn({ method: "POST" })
           amount: number;
           currency: string;
           reference: string;
+          customer?: { email?: string };
         };
       };
 
@@ -124,6 +178,8 @@ export const finalizePaystackOrder = createServerFn({ method: "POST" })
       if (transaction.amount !== expectedKobo) {
         throw new Error("Payment amount does not match the selected plan");
       }
+
+      paystackCustomerEmail = transaction.customer?.email;
     }
 
     const { supabaseAdmin } = await import(
@@ -145,7 +201,7 @@ export const finalizePaystackOrder = createServerFn({ method: "POST" })
     if (existingOrder?.vpn_vault_id) {
       const { data: existingVault, error: existingVaultErr } = await db
         .from("vpn_vault")
-        .select("api_key_or_config, expires_at")
+        .select("api_key_or_config")
         .eq("id", existingOrder.vpn_vault_id)
         .maybeSingle();
 
@@ -159,7 +215,7 @@ export const finalizePaystackOrder = createServerFn({ method: "POST" })
           reference: data.reference,
           plan_type: data.plan_type,
           api_key_or_config: existingVault.api_key_or_config as string,
-          expires_at: (existingVault.expires_at as string | null) ?? null,
+          expires_at: null,
         };
       }
     }
@@ -186,34 +242,34 @@ export const finalizePaystackOrder = createServerFn({ method: "POST" })
     }
 
     const durationDays = PLAN_DURATION_DAYS[data.plan_type];
+    const expiresAt = new Date(
+      Date.now() + durationDays * 24 * 60 * 60 * 1000,
+    ).toISOString();
 
-    const { data: claimedRows, error: claimErr } = await db.rpc(
-      "claim_vpn_config",
-      {
-        p_plan_type: data.plan_type,
-        p_user_id: userId,
-        p_order_id: savedOrder.id,
-        p_duration_days: durationDays,
-      },
-    );
+    const wireGuardConfig = await provisionWireGuardConfig({
+      email: paystackCustomerEmail || userEmail,
+      country: data.country || "US",
+    });
 
-    if (claimErr) {
-      throw new Error(claimErr.message);
-    }
+    const { data: insertedVault, error: vaultInsertErr } = await db
+      .from("vpn_vault")
+      .insert({
+        plan_type: data.plan_type,
+        api_key_or_config: wireGuardConfig,
+        is_sold: true,
+      })
+      .select("id, api_key_or_config")
+      .single();
 
-    const claimed = (
-      Array.isArray(claimedRows) ? claimedRows[0] : claimedRows
-    ) as ClaimedVaultRow | undefined;
-
-    if (!claimed?.vault_id || !claimed?.config_text) {
+    if (vaultInsertErr || !insertedVault) {
       throw new Error(
-        "Payment received, but no keys are currently in stock. Our admin will assign one shortly.",
+        vaultInsertErr?.message || "Failed to store provisioned WireGuard config",
       );
     }
 
     const { error: linkErr } = await db
       .from("orders")
-      .update({ vpn_vault_id: claimed.vault_id })
+      .update({ vpn_vault_id: insertedVault.id })
       .eq("id", savedOrder.id);
 
     if (linkErr) {
@@ -224,8 +280,8 @@ export const finalizePaystackOrder = createServerFn({ method: "POST" })
       ok: true as const,
       reference: data.reference,
       plan_type: data.plan_type,
-      api_key_or_config: claimed.config_text,
-      expires_at: claimed.expires_at ?? null,
+      api_key_or_config: insertedVault.api_key_or_config as string,
+      expires_at: expiresAt,
     };
   });
 
@@ -269,7 +325,7 @@ export const listMyKeys = createServerFn({ method: "GET" })
     if (vaultIds.length > 0) {
       const { data: vaults, error: vaultError } = await db
         .from("vpn_vault")
-        .select("id, api_key_or_config, expires_at")
+        .select("id, api_key_or_config")
         .in("id", vaultIds);
 
       if (vaultError) {
@@ -292,7 +348,7 @@ export const listMyKeys = createServerFn({ method: "GET" })
         reference_id: order.reference_id,
         created_at: order.created_at,
         api_key_or_config: vaultInfo?.api_key_or_config ?? null,
-        expires_at: vaultInfo?.expires_at ?? null,
+        expires_at: null,
       };
     });
   });
